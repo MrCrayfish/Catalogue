@@ -1,0 +1,25 @@
+modLoader="javafml" 
+loaderVersion="[36,)" 
+license="GPL3"
+
+[[mods]]
+modId="catalogue"
+version="0.1.0"
+displayName="Catalogue"
+credits=""
+authors="MrCrayfish"
+description="Improves the mod menu!"
+itemIcon="minecraft:map"
+
+[[dependencies.catalogue]]
+    modId="forge"
+    mandatory=true
+    versionRange="[36,)"
+    ordering="NONE"
+    side="BOTH"
+[[dependencies.catalogue]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.16.5,1.17)"
+    ordering="NONE"
+    side="BOTH"
