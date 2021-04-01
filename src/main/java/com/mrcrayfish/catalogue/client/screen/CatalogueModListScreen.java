@@ -79,7 +79,11 @@ public class CatalogueModListScreen extends Screen
     {
         super.init();
         this.searchTextField = new TextFieldWidget(this.font, 11, 25, 148, 20, StringTextComponent.EMPTY);
-        this.searchTextField.setResponder(s -> this.modList.filterAndUpdateList(s));
+        this.searchTextField.setResponder(s -> {
+            this.updateSearchField(s);
+            this.modList.filterAndUpdateList(s);
+            this.updateSelectedModList();
+        });
         this.children.add(this.searchTextField);
         this.modList = new ModList();
         this.modList.setLeftPos(10);
@@ -117,15 +121,9 @@ public class CatalogueModListScreen extends Screen
         if(this.selectedModInfo != null)
         {
             this.setSelectedModInfo(this.selectedModInfo);
-            if(this.modList.getSelected() == null)
-            {
-                ModEntry selectedEntry = this.modList.getEntryFromInfo(this.selectedModInfo);
-                if(selectedEntry != null)
-                {
-                    this.modList.setSelected(selectedEntry);
-                }
-            }
+            this.updateSelectedModList();
         }
+        this.updateSearchField(this.searchTextField.getValue());
     }
 
     /**
@@ -149,7 +147,6 @@ public class CatalogueModListScreen extends Screen
     public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks)
     {
         this.activeTooltip = null;
-        this.updateSearchField();
         this.renderBackground(matrixStack);
         this.drawModList(matrixStack, mouseX, mouseY, partialTicks);
         this.drawModInfo(matrixStack, mouseX, mouseY, partialTicks);
@@ -160,15 +157,23 @@ public class CatalogueModListScreen extends Screen
         }
     }
 
-    private void updateSearchField()
+    private void updateSelectedModList()
     {
-        if(this.searchTextField.getValue().isEmpty())
+        ModEntry selectedEntry = this.modList.getEntryFromInfo(this.selectedModInfo);
+        if(selectedEntry != null)
+        {
+            this.modList.setSelected(selectedEntry);
+        }
+    }
+
+    private void updateSearchField(String value)
+    {
+        if(value.isEmpty())
         {
             this.searchTextField.setSuggestion(I18n.get("fml.menu.mods.search_field_help"));
         }
         else
         {
-            String value = this.searchTextField.getValue();
             Optional<ModInfo> optional = net.minecraftforge.fml.ModList.get().getMods().stream().filter(info -> {
                 return info.getDisplayName().toLowerCase(Locale.ENGLISH).startsWith(value.toLowerCase(Locale.ENGLISH));
             }).min(Comparator.comparing(ModInfo::getDisplayName));
