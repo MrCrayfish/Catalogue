@@ -1,25 +1,31 @@
 modLoader="javafml" 
-loaderVersion="[36,)" 
+loaderVersion="[34,)"
 license="GPL3"
 
 [[mods]]
 modId="catalogue"
 version="0.1.0"
 displayName="Catalogue"
-credits=""
+credits="LONG CREDITS LONG CREDITS LONG CREDITS LONG CREDITS LONG CREDITS LONG CREDITS LONG CREDITS LONG CREDITS LONG CREDITS LONG CREDITS LONG CREDITS LONG CREDITS LONG CREDITS LONG CREDITS LONG CREDITS LONG CREDITS LONG CREDITS LONG CREDITS "
 authors="MrCrayfish"
-description="Improves the mod menu!"
+description='''
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras a lectus eget leo sollicitudin congue sed in justo. Nulla dolor odio, imperdiet et varius sed, elementum id eros. Nulla facilisi. Nunc non dignissim sem. Maecenas facilisis, erat quis dignissim efficitur, massa nulla maximus magna, ac vestibulum felis erat sit amet urna. Vestibulum feugiat nisi nisl, sed volutpat purus vestibulum quis. Nunc commodo lorem vitae magna ultrices lobortis. Quisque sodales tellus a ullamcorper aliquet. Vestibulum luctus commodo urna, in posuere ante. Pellentesque vitae urna nisl. Vestibulum aliquet egestas facilisis.
+
+Duis velit felis, elementum ut nunc ut, rhoncus tempus dolor. Vivamus in turpis ligula. Phasellus vitae consequat lacus. Suspendisse massa lorem, congue a imperdiet quis, ultrices non erat. Maecenas luctus rhoncus diam, id posuere nisi molestie vel. Pellentesque ac metus egestas ante commodo laoreet. Suspendisse potenti. Vivamus et posuere dolor, sed tristique lorem. Donec vel risus maximus, semper ex id, elementum felis. Vestibulum bibendum purus id diam sodales, non sagittis ligula pretium. Sed interdum magna non tempor tincidunt. Nullam accumsan faucibus lectus, ut eleifend est. Integer ac convallis leo.
+
+Suspendisse ultrices ullamcorper cursus. Curabitur commodo, erat et ullamcorper mattis, elit ante cursus odio, at tempor tortor ipsum in leo. Proin laoreet nisl eu risus scelerisque gravida vel et nibh. Sed vitae rhoncus nunc. Mauris eu dapibus massa. In consectetur felis at facilisis pretium. Mauris maximus turpis justo, in aliquam lectus aliquam nec.
+'''
 itemIcon="minecraft:map"
 
 [[dependencies.catalogue]]
     modId="forge"
     mandatory=true
-    versionRange="[36,)"
+    versionRange="[34,)"
     ordering="NONE"
     side="BOTH"
 [[dependencies.catalogue]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.16.5,1.17)"
+    versionRange="[1.16.3,1.17)"
     ordering="NONE"
     side="BOTH"
