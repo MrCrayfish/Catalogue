@@ -35,6 +35,7 @@ import net.minecraftforge.common.util.Size2i;
 import net.minecraftforge.fml.ForgeI18n;
 import net.minecraftforge.fml.VersionChecker;
 import net.minecraftforge.fml.client.ConfigGuiHandler;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.fml.loading.moddiscovery.ModFileInfo;
 import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
@@ -98,7 +99,7 @@ public class CatalogueModListScreen extends Screen
         this.modList.setLeftPos(10);
         this.modList.setRenderTopAndBottom(false);
         this.children.add(this.modList);
-        this.addButton(new Button(9, this.modList.getBottom() + 8, 127, 20, DialogTexts.GUI_BACK, onPress -> {
+        this.addButton(new Button(10, this.modList.getBottom() + 8, 127, 20, DialogTexts.GUI_BACK, onPress -> {
             this.getMinecraft().setScreen(null);
         }));
         this.modFolderButton = this.addButton(new CatalogueIconButton(140, this.modList.getBottom() + 8, 0, 0, onPress -> {
@@ -272,6 +273,20 @@ public class CatalogueModListScreen extends Screen
             ITextComponent modId = new StringTextComponent("Mod ID: " + this.selectedModInfo.getModId()).withStyle(TextFormatting.DARK_GRAY);
             int modIdWidth = this.font.width(modId);
             drawString(matrixStack, this.font, modId, contentLeft + contentWidth - modIdWidth, 92, 0xFFFFFF);
+
+            // Set tooltip for secure mod features forge has
+            if(ScreenUtil.isMouseWithin(contentLeft + contentWidth - modIdWidth, 92, modIdWidth, this.font.lineHeight, mouseX, mouseY))
+            {
+                if(FMLEnvironment.secureJarsEnabled)
+                {
+                    this.setActiveTooltip(ForgeI18n.parseMessage("fml.menu.mods.info.signature", ((ModInfo) this.selectedModInfo).getOwningFile().getCodeSigningFingerprint().orElse(ForgeI18n.parseMessage("fml.menu.mods.info.signature.unsigned"))));
+                    this.setActiveTooltip(ForgeI18n.parseMessage("fml.menu.mods.info.trust", ((ModInfo) this.selectedModInfo).getOwningFile().getTrustData().orElse(ForgeI18n.parseMessage("fml.menu.mods.info.trust.noauthority"))));
+                }
+                else
+                {
+                    this.setActiveTooltip(ForgeI18n.parseMessage("fml.menu.mods.info.securejardisabled"));
+                }
+            }
 
             // Draw version
             this.drawStringWithLabel(matrixStack, "fml.menu.mods.info.version", this.selectedModInfo.getVersion().toString(), contentLeft, 92, contentWidth, mouseX, mouseY, TextFormatting.GRAY, TextFormatting.WHITE);
