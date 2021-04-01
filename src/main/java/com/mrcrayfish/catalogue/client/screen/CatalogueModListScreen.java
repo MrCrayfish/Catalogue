@@ -3,11 +3,15 @@ package com.mrcrayfish.catalogue.client.screen;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mrcrayfish.catalogue.client.ScreenUtil;
+import com.mrcrayfish.catalogue.client.screen.widget.CatalogueCheckBoxButton;
+import com.mrcrayfish.catalogue.client.screen.widget.CatalogueIconButton;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.AbstractGui;
+import net.minecraft.client.gui.DialogTexts;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.button.Button;
+import net.minecraft.client.gui.widget.button.CheckboxButton;
 import net.minecraft.client.gui.widget.list.AbstractList;
 import net.minecraft.client.gui.widget.list.ExtendedList;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -19,16 +23,19 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.IReorderingProcessor;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Util;
 import net.minecraft.util.text.IFormattableTextComponent;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraftforge.common.util.Size2i;
 import net.minecraftforge.fml.ForgeI18n;
 import net.minecraftforge.fml.VersionChecker;
 import net.minecraftforge.fml.client.ConfigGuiHandler;
+import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.fml.loading.moddiscovery.ModFileInfo;
 import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
 import net.minecraftforge.fml.packs.ModFileResourcePack;
@@ -63,9 +70,11 @@ public class CatalogueModListScreen extends Screen
     private TextFieldWidget searchTextField;
     private ModList modList;
     private IModInfo selectedModInfo;
+    private Button modFolderButton;
     private Button configButton;
     private Button websiteButton;
     private Button issueButton;
+    private CheckboxButton updatesButton;
     private StringList descriptionList;
     private List<IReorderingProcessor> activeTooltip;
 
@@ -89,14 +98,17 @@ public class CatalogueModListScreen extends Screen
         this.modList.setLeftPos(10);
         this.modList.setRenderTopAndBottom(false);
         this.children.add(this.modList);
-        this.addButton(new Button(9, this.modList.getBottom() + 8, 152, 20, new StringTextComponent("Back"), onPress -> {
+        this.addButton(new Button(9, this.modList.getBottom() + 8, 127, 20, DialogTexts.GUI_BACK, onPress -> {
             this.getMinecraft().setScreen(null);
+        }));
+        this.modFolderButton = this.addButton(new CatalogueIconButton(140, this.modList.getBottom() + 8, 0, 0, onPress -> {
+            Util.getPlatform().openFile(FMLPaths.MODSDIR.get().toFile());
         }));
         int padding = 10;
         int contentLeft = this.modList.getRight() + 12 + padding;
         int contentWidth = this.width - contentLeft - padding;
         int buttonWidth = (contentWidth - padding) / 3;
-        this.configButton = this.addButton(new Button(contentLeft, 105, buttonWidth, 20, new StringTextComponent("Config"), onPress ->
+        this.configButton = this.addButton(new CatalogueIconButton(contentLeft, 105, 10, 0, buttonWidth, new TranslationTextComponent("fml.menu.mods.config"), onPress ->
         {
             if(this.selectedModInfo != null)
             {
@@ -104,11 +116,11 @@ public class CatalogueModListScreen extends Screen
             }
         }));
         this.configButton.visible = false;
-        this.websiteButton = this.addButton(new Button(contentLeft + buttonWidth + 5, 105, buttonWidth, 20, new StringTextComponent("Website"), onPress -> {
+        this.websiteButton = this.addButton(new CatalogueIconButton(contentLeft + buttonWidth + 5, 105, 20, 0, buttonWidth, new StringTextComponent("Website"), onPress -> {
             this.openLink("displayURL", (IConfigurable) this.selectedModInfo);
         }));
         this.websiteButton.visible = false;
-        this.issueButton = this.addButton(new Button(contentLeft + buttonWidth + buttonWidth + 10, 105, buttonWidth, 20, new StringTextComponent("Submit Bug"), onPress -> {
+        this.issueButton = this.addButton(new CatalogueIconButton(contentLeft + buttonWidth + buttonWidth + 10, 105, 30, 0, buttonWidth, new StringTextComponent("Submit Bug"), onPress -> {
             this.openLink("issueTrackerURL", this.selectedModInfo != null ? ((ModFileInfo) this.selectedModInfo.getOwningFile()) : null);
         }));
         this.issueButton.visible = false;
@@ -116,6 +128,13 @@ public class CatalogueModListScreen extends Screen
         this.descriptionList.setRenderTopAndBottom(false);
         this.descriptionList.setRenderBackground(false);
         this.children.add(this.descriptionList);
+
+        this.updatesButton = this.addButton(new CatalogueCheckBoxButton(this.modList.getRight() - 14, 7, button -> {
+            this.modList.filterAndUpdateList(this.searchTextField.getValue());
+            this.updateSelectedModList();
+        }));
+
+        this.modList.filterAndUpdateList(this.searchTextField.getValue());
 
         // Resizing window causes all widgets to be recreated, therefore need to update selected info
         if(this.selectedModInfo != null)
@@ -151,6 +170,12 @@ public class CatalogueModListScreen extends Screen
         this.drawModList(matrixStack, mouseX, mouseY, partialTicks);
         this.drawModInfo(matrixStack, mouseX, mouseY, partialTicks);
         super.render(matrixStack, mouseX, mouseY, partialTicks);
+
+        if(this.modFolderButton.isHovered())
+        {
+            this.setActiveTooltip(new TranslationTextComponent("fml.button.open.mods.folder").getString());
+        }
+
         if(this.activeTooltip != null)
         {
             this.renderToolTip(matrixStack, this.activeTooltip, mouseX, mouseY, this.font);
@@ -170,7 +195,7 @@ public class CatalogueModListScreen extends Screen
     {
         if(value.isEmpty())
         {
-            this.searchTextField.setSuggestion(I18n.get("fml.menu.mods.search_field_help"));
+            this.searchTextField.setSuggestion(new TranslationTextComponent("fml.menu.mods.search").append(new StringTextComponent("...")).getString());
         }
         else
         {
@@ -200,9 +225,18 @@ public class CatalogueModListScreen extends Screen
      */
     private void drawModList(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks)
     {
+        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        Minecraft.getInstance().getTextureManager().bind(VERSION_CHECK_ICONS);
+        blit(matrixStack, this.modList.getRight() - 24, 10, 24, 0, 8, 8, 64, 16);
+
         this.modList.render(matrixStack, mouseX, mouseY, partialTicks);
         drawString(matrixStack, this.font, new StringTextComponent(ForgeI18n.parseMessage("fml.menu.mods.title")).withStyle(TextFormatting.BOLD).withStyle(TextFormatting.WHITE), 70, 10, 0xFFFFFF);
         this.searchTextField.render(matrixStack, mouseX, mouseY, partialTicks);
+
+        if(ScreenUtil.isMouseWithin(this.modList.getRight() - 14, 7, 14, 14, mouseX, mouseY))
+        {
+            this.setActiveTooltip(I18n.get("fml.menu.mods.filter_updates"));
+        }
     }
 
     /**
@@ -311,7 +345,7 @@ public class CatalogueModListScreen extends Screen
             {
                 this.setActiveTooltip(text);
             }
-    }
+        }
         else
         {
             drawString(matrixStack, this.font, new StringTextComponent(label).withStyle(labelColor).append(new StringTextComponent(content).withStyle(contentColor)), x, y, 0xFFFFFF);
@@ -453,7 +487,6 @@ public class CatalogueModListScreen extends Screen
         public ModList()
         {
             super(CatalogueModListScreen.this.minecraft, 150, CatalogueModListScreen.this.height, 46, CatalogueModListScreen.this.height - 35, 26);
-            this.filterAndUpdateList(""); // This will add all mods
         }
 
         @Override
@@ -476,9 +509,12 @@ public class CatalogueModListScreen extends Screen
 
         public void filterAndUpdateList(String text)
         {
-            List<ModEntry> entries = net.minecraftforge.fml.ModList.get().getMods().stream().filter(info -> {
-                return info.getDisplayName().toLowerCase(Locale.ENGLISH).contains(text.toLowerCase(Locale.ENGLISH));
-            }).map(info -> new ModEntry(info, this)).sorted(SORT).collect(Collectors.toList());
+            List<ModEntry> entries = net.minecraftforge.fml.ModList.get().getMods().stream()
+                .filter(info -> info.getDisplayName().toLowerCase(Locale.ENGLISH).contains(text.toLowerCase(Locale.ENGLISH)))
+                .filter(info -> !updatesButton.selected() || VersionChecker.getResult(info).status.shouldDraw())
+                .map(info -> new ModEntry(info, this))
+                .sorted(SORT)
+                .collect(Collectors.toList());
             this.replaceEntries(entries);
             this.setScrollAmount(0);
         }
