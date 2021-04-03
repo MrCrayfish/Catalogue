@@ -10,6 +10,7 @@ authors="MrCrayfish"
 logoFile="catalogue.png"
 description="Updates Forge's mod list with a new and improved design"
 itemIcon="minecraft:map"
+credits="Hatsondogs for creating icons"
 
 [[dependencies.catalogue]]
     modId="forge"
