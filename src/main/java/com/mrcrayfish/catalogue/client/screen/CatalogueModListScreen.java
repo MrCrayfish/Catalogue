@@ -648,6 +648,9 @@ public class CatalogueModListScreen extends Screen
         }
 
         @Override
+        public void setSelected(@Nullable StringEntry entry) {}
+
+        @Override
         protected int getScrollbarPosition()
         {
             return this.getLeft() + this.width - 7;
