@@ -1,6 +1,7 @@
 modLoader="javafml" 
 loaderVersion="[34,)"
 license="GPL3"
+issueTrackerURL="https://github.com/MrCrayfish/Catalogue/issues"
 
 [[mods]]
 modId="catalogue"
@@ -8,6 +9,7 @@ version="1.0.0"
 displayName="Catalogue"
 authors="MrCrayfish"
 logoFile="catalogue.png"
+displayURL="https://www.curseforge.com/minecraft/mc-mods/catalogue"
 description="Updates Forge's mod list with a new and improved design"
 itemIcon="minecraft:map"
 credits="Hatsondogs for creating icons"
