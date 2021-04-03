@@ -172,7 +172,7 @@ public class CatalogueModListScreen extends Screen
         this.drawModInfo(matrixStack, mouseX, mouseY, partialTicks);
         super.render(matrixStack, mouseX, mouseY, partialTicks);
 
-        if(this.modFolderButton.isHovered())
+        if(this.modFolderButton.isMouseOver(mouseX, mouseY))
         {
             this.setActiveTooltip(new TranslationTextComponent("fml.button.open.mods.folder").getString());
         }
