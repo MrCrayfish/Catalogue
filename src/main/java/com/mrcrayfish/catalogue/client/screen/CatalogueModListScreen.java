@@ -6,6 +6,8 @@ import com.mrcrayfish.catalogue.client.ScreenUtil;
 import com.mrcrayfish.catalogue.client.screen.widget.CatalogueCheckBoxButton;
 import com.mrcrayfish.catalogue.client.screen.widget.CatalogueIconButton;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.audio.SimpleSound;
+import net.minecraft.client.audio.SoundHandler;
 import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.DialogTexts;
 import net.minecraft.client.gui.screen.Screen;
@@ -23,6 +25,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.IReorderingProcessor;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundEvents;
 import net.minecraft.util.Util;
 import net.minecraft.util.text.IFormattableTextComponent;
 import net.minecraft.util.text.ITextComponent;
@@ -46,6 +49,7 @@ import net.minecraftforge.forgespi.language.IModInfo;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.versions.forge.ForgeVersion;
 import org.apache.commons.lang3.tuple.Pair;
+import org.lwjgl.glfw.GLFW;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -546,6 +550,19 @@ public class CatalogueModListScreen extends Screen
             ScreenUtil.scissor(this.getRowLeft(), this.getTop(), this.getWidth(), this.getBottom() - this.getTop());
             super.render(matrixStack, mouseX, mouseY, partialTicks);
             RenderSystem.disableScissor();
+        }
+
+        @Override
+        public boolean keyPressed(int key, int scanCode, int modifiers)
+        {
+            if(key == GLFW.GLFW_KEY_ENTER && this.getSelected() != null)
+            {
+                CatalogueModListScreen.this.setSelectedModInfo(this.getSelected().info);
+                SoundHandler handler = Minecraft.getInstance().getSoundManager();
+                handler.play(SimpleSound.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+                return true;
+            }
+            return super.keyPressed(key, scanCode, modifiers);
         }
     }
 
