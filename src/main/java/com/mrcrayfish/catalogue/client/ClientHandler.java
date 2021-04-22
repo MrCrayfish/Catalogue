@@ -1,6 +1,7 @@
 package com.mrcrayfish.catalogue.client;
 
 import com.mrcrayfish.catalogue.client.screen.CatalogueModListScreen;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.client.gui.screen.ModListScreen;
@@ -9,7 +10,7 @@ import net.minecraftforge.fml.common.Mod;
 /**
  * Author: MrCrayfish
  */
-@Mod.EventBusSubscriber(modid = "catalogue")
+@Mod.EventBusSubscriber(modid = "catalogue", value = Dist.CLIENT)
 public class ClientHandler
 {
     @SubscribeEvent
