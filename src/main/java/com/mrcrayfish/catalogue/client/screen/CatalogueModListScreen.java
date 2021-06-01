@@ -72,6 +72,7 @@ public class CatalogueModListScreen extends Screen
     private static final ResourceLocation VERSION_CHECK_ICONS = new ResourceLocation(ForgeVersion.MOD_ID, "textures/gui/version_check_icons.png");
     private static final Map<String, Pair<ResourceLocation, Size2i>> LOGO_CACHE = new HashMap<>();
     private static final Map<String, Pair<ResourceLocation, Size2i>> ICON_CACHE = new HashMap<>();
+    private static final Map<String, Item> ITEM_CACHE = new HashMap<>();
 
     private TextFieldWidget searchTextField;
     private ModList modList;
@@ -636,9 +637,7 @@ public class CatalogueModListScreen extends Screen
             }
             else
             {
-                Item iconItem = this.getItemIcon();
-                if(this.info.getModId().equals("forge")) iconItem = Items.ANVIL;
-                CatalogueModListScreen.this.getMinecraft().getItemRenderer().renderGuiItem(new ItemStack(iconItem), left + 4, top + 2);
+                CatalogueModListScreen.this.getMinecraft().getItemRenderer().renderGuiItem(new ItemStack(this.getItemIcon()), left + 4, top + 2);
             }
 
             // Draws an icon if there is an update for the mod
@@ -654,13 +653,44 @@ public class CatalogueModListScreen extends Screen
 
         private Item getItemIcon()
         {
+            if(ITEM_CACHE.containsKey(this.info.getModId()))
+            {
+                return ITEM_CACHE.get(this.info.getModId());
+            }
+
+            // Put grass as default item icon
+            ITEM_CACHE.put(this.info.getModId(), Items.GRASS_BLOCK);
+
+            // Special case for Forge to set item icon to anvil
+            if(this.info.getModId().equals("forge"))
+            {
+                ITEM_CACHE.put("forge", Items.ANVIL);
+                return Items.ANVIL;
+            }
+
+            // Gets the raw item icon resource string
             String itemIcon = (String) this.info.getModProperties().get("catalogueItemIcon");
             if(itemIcon == null)
             {
                 //Fallback to old method for backwards compatibility
                 itemIcon = (String) ((ModInfo) this.info).getConfigElement("itemIcon").orElse("");
             }
-            return itemIcon.isEmpty() ? Items.GRASS_BLOCK : ForgeRegistries.ITEMS.getValue(new ResourceLocation(itemIcon));
+
+            if(!itemIcon.isEmpty())
+            {
+                ResourceLocation resource = ResourceLocation.tryParse(itemIcon);
+                if(resource != null)
+                {
+                    Item item = ForgeRegistries.ITEMS.getValue(resource);
+                    if(item != null)
+                    {
+                        ITEM_CACHE.put(this.info.getModId(), item);
+                        return item;
+                    }
+                }
+            }
+
+            return Items.GRASS_BLOCK;
         }
 
         private ITextComponent getFormattedModName()
