@@ -666,7 +666,7 @@ public class CatalogueModListScreen extends Screen
         private ITextComponent getFormattedModName()
         {
             String name = this.info.getDisplayName();
-            int width = this.list.getRowWidth() - (this.list.getMaxScroll() > 0 ? 26 : 22);
+            int width = this.list.getRowWidth() - (this.list.getMaxScroll() > 0 ? 30 : 24);
             if(CatalogueModListScreen.this.font.width(name) > width)
             {
                 name = CatalogueModListScreen.this.font.plainSubstrByWidth(name, width - 10) + "...";
