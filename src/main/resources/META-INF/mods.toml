@@ -11,7 +11,6 @@ authors="MrCrayfish"
 logoFile="catalogue.png"
 displayURL="https://www.curseforge.com/minecraft/mc-mods/catalogue"
 description="Updates Forge's mod list with a new and improved design"
-itemIcon="minecraft:map"
 credits="Hatsondogs for creating icons"
 
 [[dependencies.catalogue]]
@@ -26,3 +25,6 @@ credits="Hatsondogs for creating icons"
     versionRange="[1.16.3,1.17)"
     ordering="NONE"
     side="BOTH"
+
+[modproperties.catalogue]
+    catalogueImageIcon="catalogue.png"

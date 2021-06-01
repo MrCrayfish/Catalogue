@@ -71,6 +71,7 @@ public class CatalogueModListScreen extends Screen
     private static final ResourceLocation MISSING_BANNER = new ResourceLocation("catalogue", "textures/gui/missing_banner.png");
     private static final ResourceLocation VERSION_CHECK_ICONS = new ResourceLocation(ForgeVersion.MOD_ID, "textures/gui/version_check_icons.png");
     private static final Map<String, Pair<ResourceLocation, Size2i>> LOGO_CACHE = new HashMap<>();
+    private static final Map<String, Pair<ResourceLocation, Size2i>> ICON_CACHE = new HashMap<>();
 
     private TextFieldWidget searchTextField;
     private ModList modList;
@@ -467,7 +468,8 @@ public class CatalogueModListScreen extends Screen
 
     private void loadAndCacheLogo(IModInfo info)
     {
-        if(LOGO_CACHE.containsKey(info.getModId())) return;
+        if(LOGO_CACHE.containsKey(info.getModId()))
+            return;
 
         // Fills an empty logo as logo may not be present
         LOGO_CACHE.put(info.getModId(), Pair.of(null, new Size2i(0, 0)));
@@ -482,13 +484,37 @@ public class CatalogueModListScreen extends Screen
             {
                 NativeImage logo = NativeImage.read(is);
                 TextureManager textureManager = this.getMinecraft().getTextureManager();
-                LOGO_CACHE.put(info.getModId(), Pair.of(textureManager.register("modlogo", this.createLogoTexture(logo, modInfo)), new Size2i(logo.getWidth(), logo.getHeight())));
+                LOGO_CACHE.put(info.getModId(), Pair.of(textureManager.register("modlogo", this.createLogoTexture(logo, modInfo.getLogoBlur())), new Size2i(logo.getWidth(), logo.getHeight())));
             }
             catch(IOException ignored) {}
         });
     }
 
-    private DynamicTexture createLogoTexture(NativeImage image, ModInfo info)
+    private void loadAndCacheIcon(IModInfo info)
+    {
+        if(ICON_CACHE.containsKey(info.getModId()))
+            return;
+
+        // Fills an empty icon as icon may not be present
+        ICON_CACHE.put(info.getModId(), Pair.of(null, new Size2i(0, 0)));
+
+        // Attempts to load the real icon
+        ModInfo modInfo = (ModInfo) info;
+        if(modInfo.getModProperties().containsKey("catalogueImageIcon"))
+        {
+            String s = (String) modInfo.getModProperties().get("catalogueImageIcon");
+            ModFileResourcePack resourcePack = ResourcePackLoader.getResourcePackFor(info.getModId()).orElse(ResourcePackLoader.getResourcePackFor("forge").orElseThrow(() -> new RuntimeException("Can't find forge, WHAT!")));
+            try(InputStream is = resourcePack.getRootResource(s))
+            {
+                NativeImage logo = NativeImage.read(is);
+                TextureManager textureManager = this.getMinecraft().getTextureManager();
+                ICON_CACHE.put(info.getModId(), Pair.of(textureManager.register("catalogueicon", this.createLogoTexture(logo, false)), new Size2i(logo.getWidth(), logo.getHeight())));
+            }
+            catch(IOException ignored) {}
+        }
+    }
+
+    private DynamicTexture createLogoTexture(NativeImage image, boolean blur)
     {
         return new DynamicTexture(image)
         {
@@ -496,7 +522,7 @@ public class CatalogueModListScreen extends Screen
             public void upload()
             {
                 this.bind();
-                image.upload(0, 0, 0, 0, 0, image.getWidth(), image.getHeight(), info.getLogoBlur(), false, false, false);
+                image.upload(0, 0, 0, 0, 0, image.getWidth(), image.getHeight(), blur, false, false, false);
             }
         };
     }
@@ -581,14 +607,39 @@ public class CatalogueModListScreen extends Screen
         public void render(MatrixStack matrixStack, int index, int top, int left, int rowWidth, int rowHeight, int mouseX, int mouseY, boolean hovered, float partialTicks)
         {
             // Draws mod name and version
-            drawString(matrixStack, CatalogueModListScreen.this.font, this.getFormattedModName(), left + 22, top + 2, 0xFFFFFF);
-            drawString(matrixStack, CatalogueModListScreen.this.font, new StringTextComponent(this.info.getVersion().toString()).withStyle(TextFormatting.GRAY), left + 22, top + 12, 0xFFFFFF);
+            drawString(matrixStack, CatalogueModListScreen.this.font, this.getFormattedModName(), left + 24, top + 2, 0xFFFFFF);
+            drawString(matrixStack, CatalogueModListScreen.this.font, new StringTextComponent(this.info.getVersion().toString()).withStyle(TextFormatting.GRAY), left + 24, top + 12, 0xFFFFFF);
 
-            // Draw item icon
-            String itemIcon = (String) ((ModInfo) this.info).getConfigElement("itemIcon").orElse("");
-            Item iconItem = itemIcon.isEmpty() ? Items.GRASS_BLOCK : ForgeRegistries.ITEMS.getValue(new ResourceLocation(itemIcon));
-            if(this.info.getModId().equals("forge")) iconItem = Items.ANVIL;
-            CatalogueModListScreen.this.getMinecraft().getItemRenderer().renderGuiItem(new ItemStack(iconItem), left + 2, top + 2);
+            // Lazy load icons
+            if(this.info.getModProperties().containsKey("catalogueImageIcon") && !ICON_CACHE.containsKey(this.info.getModId()))
+            {
+                CatalogueModListScreen.this.loadAndCacheIcon(this.info);
+            }
+
+            // Draw icon
+            if(ICON_CACHE.containsKey(this.info.getModId()))
+            {
+                ResourceLocation logoResource = TextureManager.INTENTIONAL_MISSING_TEXTURE;
+                Size2i size = new Size2i(16, 16);
+
+                Pair<ResourceLocation, Size2i> logoInfo = ICON_CACHE.get(this.info.getModId());
+                if(logoInfo.getLeft() != null)
+                {
+                    logoResource = logoInfo.getLeft();
+                    size = logoInfo.getRight();
+                }
+
+                Minecraft.getInstance().getTextureManager().bind(logoResource);
+                RenderSystem.enableBlend();
+                RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+                AbstractGui.blit(matrixStack, left + 4, top + 2, 16, 16, 0.0F, 0.0F, size.width, size.height, size.width, size.height);
+            }
+            else
+            {
+                Item iconItem = this.getItemIcon();
+                if(this.info.getModId().equals("forge")) iconItem = Items.ANVIL;
+                CatalogueModListScreen.this.getMinecraft().getItemRenderer().renderGuiItem(new ItemStack(iconItem), left + 4, top + 2);
+            }
 
             // Draws an icon if there is an update for the mod
             VersionChecker.CheckResult result = VersionChecker.getResult(this.info);
@@ -599,6 +650,17 @@ public class CatalogueModListScreen extends Screen
                 int vOffset = result.status.isAnimated() && (System.currentTimeMillis() / 800 & 1) == 1 ? 8 : 0;
                 AbstractGui.blit(matrixStack, left + rowWidth - 8 - 10, top + 6, result.status.getSheetOffset() * 8, vOffset, 8, 8, 64, 16);
             }
+        }
+
+        private Item getItemIcon()
+        {
+            String itemIcon = (String) this.info.getModProperties().get("catalogueItemIcon");
+            if(itemIcon == null)
+            {
+                //Fallback to old method for backwards compatibility
+                itemIcon = (String) ((ModInfo) this.info).getConfigElement("itemIcon").orElse("");
+            }
+            return itemIcon.isEmpty() ? Items.GRASS_BLOCK : ForgeRegistries.ITEMS.getValue(new ResourceLocation(itemIcon));
         }
 
         private ITextComponent getFormattedModName()
