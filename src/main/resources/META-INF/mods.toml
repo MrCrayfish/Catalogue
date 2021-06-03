@@ -5,7 +5,7 @@ issueTrackerURL="https://github.com/MrCrayfish/Catalogue/issues"
 
 [[mods]]
 modId="catalogue"
-version="1.2.1"
+version="1.2.2"
 displayName="Catalogue"
 authors="MrCrayfish"
 logoFile="catalogue.png"
