@@ -624,7 +624,7 @@ public class CatalogueModListScreen extends Screen
                 Size2i size = new Size2i(16, 16);
 
                 Pair<ResourceLocation, Size2i> logoInfo = ICON_CACHE.get(this.info.getModId());
-                if(logoInfo.getLeft() != null)
+                if(logoInfo != null && logoInfo.getLeft() != null)
                 {
                     logoResource = logoInfo.getLeft();
                     size = logoInfo.getRight();
