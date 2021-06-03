@@ -376,7 +376,7 @@ public class CatalogueModListScreen extends Screen
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button)
     {
-        /*if(this.selectedModInfo != null)
+        if(this.selectedModInfo != null)
         {
             int contentLeft = this.modList.getRight() + 12 + 10;
             String version = ForgeI18n.parseMessage("fml.menu.mods.info.version", this.selectedModInfo.getVersion().toString());
@@ -384,13 +384,13 @@ public class CatalogueModListScreen extends Screen
             if(ScreenUtil.isMouseWithin(contentLeft + versionWidth + 5, 92, 8, 8, (int) mouseX, (int) mouseY))
             {
                 VersionChecker.CheckResult result = VersionChecker.getResult(this.selectedModInfo);
-                if(result.status.shouldDraw())
+                if(result.status.shouldDraw() && result.url != null)
                 {
                     Style style = Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, result.url));
                     this.handleComponentClicked(style);
                 }
             }
-        }*/
+        }
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
