@@ -72,7 +72,7 @@ public class CatalogueModListScreen extends Screen
     private static final ResourceLocation VERSION_CHECK_ICONS = new ResourceLocation(ForgeVersion.MOD_ID, "textures/gui/version_check_icons.png");
     private static final Map<String, Pair<ResourceLocation, Size2i>> LOGO_CACHE = new HashMap<>();
     private static final Map<String, Pair<ResourceLocation, Size2i>> ICON_CACHE = new HashMap<>();
-    private static final Map<String, Item> ITEM_CACHE = new HashMap<>();
+    private static final Map<String, ItemStack> ITEM_CACHE = new HashMap<>();
 
     private TextFieldWidget searchTextField;
     private ModList modList;
@@ -637,7 +637,7 @@ public class CatalogueModListScreen extends Screen
             }
             else
             {
-                CatalogueModListScreen.this.getMinecraft().getItemRenderer().renderGuiItem(new ItemStack(this.getItemIcon()), left + 4, top + 2);
+                CatalogueModListScreen.this.getMinecraft().getItemRenderer().renderGuiItem(this.getItemIcon(), left + 4, top + 2);
             }
 
             // Draws an icon if there is an update for the mod
@@ -651,21 +651,19 @@ public class CatalogueModListScreen extends Screen
             }
         }
 
-        private Item getItemIcon()
+        private ItemStack getItemIcon()
         {
             if(ITEM_CACHE.containsKey(this.info.getModId()))
             {
                 return ITEM_CACHE.get(this.info.getModId());
             }
 
-            // Put grass as default item icon
-            ITEM_CACHE.put(this.info.getModId(), Items.GRASS_BLOCK);
-
             // Special case for Forge to set item icon to anvil
             if(this.info.getModId().equals("forge"))
             {
-                ITEM_CACHE.put("forge", Items.ANVIL);
-                return Items.ANVIL;
+                ItemStack stack = new ItemStack(Items.ANVIL);
+                ITEM_CACHE.put("forge", stack);
+                return stack;
             }
 
             // Gets the raw item icon resource string
@@ -684,13 +682,17 @@ public class CatalogueModListScreen extends Screen
                     Item item = ForgeRegistries.ITEMS.getValue(resource);
                     if(item != null)
                     {
-                        ITEM_CACHE.put(this.info.getModId(), item);
-                        return item;
+                        ItemStack stack = new ItemStack(item);
+                        ITEM_CACHE.put(this.info.getModId(), stack);
+                        return stack;
                     }
                 }
             }
 
-            return Items.GRASS_BLOCK;
+            // Put grass as default item icon
+            ItemStack stack = new ItemStack(Items.GRASS_BLOCK);
+            ITEM_CACHE.put(this.info.getModId(), stack);
+            return stack;
         }
 
         private ITextComponent getFormattedModName()
