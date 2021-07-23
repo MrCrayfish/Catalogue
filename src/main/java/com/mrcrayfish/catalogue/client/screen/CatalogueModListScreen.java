@@ -481,9 +481,8 @@ public class CatalogueModListScreen extends Screen
         {
             if(s.isEmpty()) return;
             ModFileResourcePack resourcePack = ResourcePackLoader.getResourcePackFor(info.getModId()).orElse(ResourcePackLoader.getResourcePackFor("forge").orElseThrow(() -> new RuntimeException("Can't find forge, WHAT!")));
-            try(InputStream is = resourcePack.getRootResource(s))
+            try(InputStream is = resourcePack.getRootResource(s); NativeImage logo = NativeImage.read(is))
             {
-                NativeImage logo = NativeImage.read(is);
                 TextureManager textureManager = this.getMinecraft().getTextureManager();
                 LOGO_CACHE.put(info.getModId(), Pair.of(textureManager.register("modlogo", this.createLogoTexture(logo, modInfo.getLogoBlur())), new Size2i(logo.getWidth(), logo.getHeight())));
             }
@@ -505,17 +504,51 @@ public class CatalogueModListScreen extends Screen
         {
             String s = (String) modInfo.getModProperties().get("catalogueImageIcon");
             ModFileResourcePack resourcePack = ResourcePackLoader.getResourcePackFor(info.getModId()).orElse(ResourcePackLoader.getResourcePackFor("forge").orElseThrow(() -> new RuntimeException("Can't find forge, WHAT!")));
-            try(InputStream is = resourcePack.getRootResource(s))
+            try(InputStream is = resourcePack.getRootResource(s); NativeImage icon = NativeImage.read(is))
             {
-                NativeImage logo = NativeImage.read(is);
                 TextureManager textureManager = this.getMinecraft().getTextureManager();
-                ICON_CACHE.put(info.getModId(), Pair.of(textureManager.register("catalogueicon", this.createLogoTexture(logo, false)), new Size2i(logo.getWidth(), logo.getHeight())));
+                ICON_CACHE.put(info.getModId(), Pair.of(textureManager.register("catalogueicon", this.createLogoTexture(icon, false)), new Size2i(icon.getWidth(), icon.getHeight())));
+                return;
             }
             catch(IOException ignored) {}
         }
+
+        // Attempts to use the logo file if it's a square
+        modInfo.getLogoFile().ifPresent(s ->
+        {
+            if(s.isEmpty()) return;
+            ModFileResourcePack resourcePack = ResourcePackLoader.getResourcePackFor(info.getModId()).orElse(ResourcePackLoader.getResourcePackFor("forge").orElseThrow(() -> new RuntimeException("Can't find forge, WHAT!")));
+            try(InputStream is = resourcePack.getRootResource(s); NativeImage logo = NativeImage.read(is))
+            {
+                if(logo.getWidth() == logo.getHeight())
+                {
+                    TextureManager textureManager = this.getMinecraft().getTextureManager();
+                    String modId = info.getModId();
+
+                    /* The first selected mod will have it's logo cached before the icon, so we
+                     * can just use the logo instead of loading the image again. */
+                    if(LOGO_CACHE.containsKey(modId))
+                    {
+                        if(LOGO_CACHE.get(modId).getLeft() != null)
+                        {
+                            ICON_CACHE.put(modId, LOGO_CACHE.get(modId));
+                            return;
+                        }
+                    }
+
+                    /* Since the icon will be same as the logo, we can cache into both icon and logo cache */
+                    DynamicTexture texture = this.createLogoTexture(logo, modInfo.getLogoBlur());
+                    Size2i size = new Size2i(logo.getWidth(), logo.getHeight());
+                    ResourceLocation textureId = textureManager.register("catalogueicon", texture);
+                    ICON_CACHE.put(modId, Pair.of(textureId, size));
+                    LOGO_CACHE.put(modId, Pair.of(textureId, size));
+                }
+            }
+            catch(IOException ignored) {}
+        });
     }
 
-    private DynamicTexture createLogoTexture(NativeImage image, boolean blur)
+    private DynamicTexture createLogoTexture(NativeImage image, boolean smooth)
     {
         return new DynamicTexture(image)
         {
@@ -523,7 +556,7 @@ public class CatalogueModListScreen extends Screen
             public void upload()
             {
                 this.bind();
-                image.upload(0, 0, 0, 0, 0, image.getWidth(), image.getHeight(), blur, false, false, false);
+                image.upload(0, 0, 0, 0, 0, image.getWidth(), image.getHeight(), smooth, false, false, false);
             }
         };
     }
@@ -611,14 +644,10 @@ public class CatalogueModListScreen extends Screen
             drawString(matrixStack, CatalogueModListScreen.this.font, this.getFormattedModName(), left + 24, top + 2, 0xFFFFFF);
             drawString(matrixStack, CatalogueModListScreen.this.font, new StringTextComponent(this.info.getVersion().toString()).withStyle(TextFormatting.GRAY), left + 24, top + 12, 0xFFFFFF);
 
-            // Lazy load icons
-            if(this.info.getModProperties().containsKey("catalogueImageIcon") && !ICON_CACHE.containsKey(this.info.getModId()))
-            {
-                CatalogueModListScreen.this.loadAndCacheIcon(this.info);
-            }
+            CatalogueModListScreen.this.loadAndCacheIcon(this.info);
 
             // Draw icon
-            if(ICON_CACHE.containsKey(this.info.getModId()))
+            if(ICON_CACHE.containsKey(this.info.getModId()) && ICON_CACHE.get(this.info.getModId()).getLeft() != null)
             {
                 ResourceLocation logoResource = TextureManager.INTENTIONAL_MISSING_TEXTURE;
                 Size2i size = new Size2i(16, 16);
