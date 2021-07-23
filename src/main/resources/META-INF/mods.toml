@@ -1,5 +1,5 @@
 modLoader="javafml" 
-loaderVersion="[34,)"
+loaderVersion="[37,)"
 license="GPL3"
 issueTrackerURL="https://github.com/MrCrayfish/Catalogue/issues"
 
@@ -17,13 +17,13 @@ credits="Hatsondogs for creating icons"
 [[dependencies.catalogue]]
     modId="forge"
     mandatory=true
-    versionRange="[34,)"
+    versionRange="[37,)"
     ordering="NONE"
     side="BOTH"
 [[dependencies.catalogue]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.16.3,1.17)"
+    versionRange="[1.17.1,1.18)"
     ordering="NONE"
     side="BOTH"
 
