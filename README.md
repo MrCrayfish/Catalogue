@@ -8,7 +8,7 @@ Catalogue is a simple mod that replaces Forge's mod list menu with an updated an
 
 ## Developers
 
-This mod has support to change the item icon in the mod list incase you want to change it to an item in your mod. All you need to do is add `itemIcon` property into your `mods.toml` under `[[mods]]` and set the value to `"minecraft:apple"` or another item. You do not need to make your mod depend on this mod, however on CurseForge I appreciate if you mark this mod as an optional dependency.
+This mod has support to change the item icon in the mod list incase you want to change it to an item in your mod. All you need to do is add `itemIcon` property into your `mods.toml` under `[[modproperties]]` and set the value to `"minecraft:apple"` or another item. You do not need to make your mod depend on this mod, however on CurseForge I appreciate if you mark this mod as an optional dependency.
 
 ## Screenshots
 
