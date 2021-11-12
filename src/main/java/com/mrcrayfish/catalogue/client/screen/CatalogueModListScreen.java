@@ -61,6 +61,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 /**
@@ -754,6 +755,18 @@ public class CatalogueModListScreen extends Screen
                         ITEM_CACHE.put(this.info.getModId(), item);
                         return item;
                     }
+                }
+            }
+
+            // If the mod doesn't specify an item to use, Catalogue will attempt to get an item from the mod
+            Optional<Item> optional = ForgeRegistries.ITEMS.getValues().stream().filter(item -> item.getRegistryName().getNamespace().equals(this.info.getModId())).findFirst();
+            if(optional.isPresent())
+            {
+                Item item = optional.get();
+                if(item != Items.AIR)
+                {
+                    ITEM_CACHE.put(this.info.getModId(), item);
+                    return item;
                 }
             }
 
