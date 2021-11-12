@@ -149,6 +149,11 @@ public class CatalogueModListScreen extends Screen
         {
             this.setSelectedModInfo(this.selectedModInfo);
             this.updateSelectedModList();
+            ModEntry entry = this.modList.getEntryFromInfo(this.selectedModInfo);
+            if(entry != null)
+            {
+                this.modList.centerScrollOn(entry);
+            }
         }
         this.updateSearchField(this.searchTextField.getValue());
     }
