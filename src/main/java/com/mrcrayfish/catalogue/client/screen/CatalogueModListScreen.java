@@ -802,7 +802,7 @@ public class CatalogueModListScreen extends Screen
         {
             this.clearEntries();
             CatalogueModListScreen.this.font.getSplitter().splitLines(info.getDescription().trim(), this.getRowWidth(), Style.EMPTY).forEach(text -> {
-                this.addEntry(new StringEntry(text.getString().replace("\n","")));
+                this.addEntry(new StringEntry(text.getString().replace("\n", "").replace("\r", "").trim()));
             });
         }
 
