@@ -2,6 +2,7 @@ package com.mrcrayfish.catalogue.client.screen;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mrcrayfish.catalogue.Catalogue;
 import com.mrcrayfish.catalogue.client.ScreenUtil;
 import com.mrcrayfish.catalogue.client.screen.widget.CatalogueCheckBoxButton;
 import com.mrcrayfish.catalogue.client.screen.widget.CatalogueIconButton;
@@ -479,7 +480,15 @@ public class CatalogueModListScreen extends Screen
         ModInfo modInfo = (ModInfo) info;
         modInfo.getLogoFile().ifPresent(s ->
         {
-            if(s.isEmpty()) return;
+            if(s.isEmpty())
+                return;
+
+            if(s.contains("/") || s.contains("\\"))
+            {
+                Catalogue.LOGGER.warn("Skipped loading logo file from {}. The file name '{}' contained illegal characters '/' or '\\'", info.getDisplayName(), s);
+                return;
+            }
+
             ModFileResourcePack resourcePack = ResourcePackLoader.getResourcePackFor(info.getModId()).orElse(ResourcePackLoader.getResourcePackFor("forge").orElseThrow(() -> new RuntimeException("Can't find forge, WHAT!")));
             try(InputStream is = resourcePack.getRootResource(s); NativeImage logo = NativeImage.read(is))
             {
@@ -503,6 +512,16 @@ public class CatalogueModListScreen extends Screen
         if(modInfo.getModProperties().containsKey("catalogueImageIcon"))
         {
             String s = (String) modInfo.getModProperties().get("catalogueImageIcon");
+
+            if(s.isEmpty())
+                return;
+
+            if(s.contains("/") || s.contains("\\"))
+            {
+                Catalogue.LOGGER.warn("Skipped loading Catalogue icon file from {}. The file name '{}' contained illegal characters '/' or '\\'", info.getDisplayName(), s);
+                return;
+            }
+
             ModFileResourcePack resourcePack = ResourcePackLoader.getResourcePackFor(info.getModId()).orElse(ResourcePackLoader.getResourcePackFor("forge").orElseThrow(() -> new RuntimeException("Can't find forge, WHAT!")));
             try(InputStream is = resourcePack.getRootResource(s); NativeImage icon = NativeImage.read(is))
             {
@@ -516,7 +535,15 @@ public class CatalogueModListScreen extends Screen
         // Attempts to use the logo file if it's a square
         modInfo.getLogoFile().ifPresent(s ->
         {
-            if(s.isEmpty()) return;
+            if(s.isEmpty())
+                return;
+
+            if(s.contains("/") || s.contains("\\"))
+            {
+                Catalogue.LOGGER.warn("Skipped loading logo file from {}. The file name '{}' contained illegal characters '/' or '\\'", info.getDisplayName(), s);
+                return;
+            }
+
             ModFileResourcePack resourcePack = ResourcePackLoader.getResourcePackFor(info.getModId()).orElse(ResourcePackLoader.getResourcePackFor("forge").orElseThrow(() -> new RuntimeException("Can't find forge, WHAT!")));
             try(InputStream is = resourcePack.getRootResource(s); NativeImage logo = NativeImage.read(is))
             {
@@ -623,6 +650,12 @@ public class CatalogueModListScreen extends Screen
                 return true;
             }
             return super.keyPressed(key, scanCode, modifiers);
+        }
+
+        @Override
+        public void centerScrollOn(ModEntry entry)
+        {
+            super.centerScrollOn(entry);
         }
     }
 
