@@ -759,12 +759,14 @@ public class CatalogueModListScreen extends Screen
 
             if(!itemIcon.isEmpty())
             {
-                try {
+                try
+                {
                     ItemParser parser = new ItemParser(new StringReader(itemIcon), false).parse();
                     ItemStack item = new ItemStack(parser.getItem(), 1, parser.getNbt());
                     ITEM_CACHE.put(this.info.getModId(), item);
                     return item;
-                } catch (CommandSyntaxException ignored) {}
+                }
+                catch (CommandSyntaxException ignored) {}
             }
 
             // If the mod doesn't specify an item to use, Catalogue will attempt to get an item from the mod
