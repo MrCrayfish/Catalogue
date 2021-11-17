@@ -288,8 +288,8 @@ public class CatalogueModListScreen extends Screen
             int modIdWidth = this.font.width(modId);
             drawString(poseStack, this.font, modId, contentLeft + contentWidth - modIdWidth, 92, 0xFFFFFF);
 
-            // Set tooltip for secure mod features forge has
-            if(ScreenUtil.isMouseWithin(contentLeft + contentWidth - modIdWidth, 92, modIdWidth, this.font.lineHeight, mouseX, mouseY))
+            // Set tooltip for secure mod features forge has. REMOVED DUE TO FORGE ALSO REMOVING
+            /*if(ScreenUtil.isMouseWithin(contentLeft + contentWidth - modIdWidth, 92, modIdWidth, this.font.lineHeight, mouseX, mouseY))
             {
                 if(FMLEnvironment.secureJarsEnabled)
                 {
@@ -300,7 +300,7 @@ public class CatalogueModListScreen extends Screen
                 {
                     this.setActiveTooltip(ForgeI18n.parseMessage("fml.menu.mods.info.securejardisabled"));
                 }
-            }
+            }*/
 
             // Draw version
             this.drawStringWithLabel(poseStack, "fml.menu.mods.info.version", this.selectedModInfo.getVersion().toString(), contentLeft, 92, contentWidth, mouseX, mouseY, ChatFormatting.GRAY, ChatFormatting.WHITE);
