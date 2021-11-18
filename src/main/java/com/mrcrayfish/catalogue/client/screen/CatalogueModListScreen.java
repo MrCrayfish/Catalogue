@@ -85,6 +85,7 @@ public class CatalogueModListScreen extends Screen
     private Button issueButton;
     private CheckboxButton updatesButton;
     private StringList descriptionList;
+    private int tooltipYOffset;
     private List<IReorderingProcessor> activeTooltip;
 
     public CatalogueModListScreen()
@@ -192,7 +193,8 @@ public class CatalogueModListScreen extends Screen
 
         if(this.activeTooltip != null)
         {
-            this.renderToolTip(matrixStack, this.activeTooltip, mouseX, mouseY, this.font);
+            this.renderToolTip(matrixStack, this.activeTooltip, mouseX, mouseY + this.tooltipYOffset, this.font);
+            this.tooltipYOffset = 0;
         }
     }
 
@@ -404,6 +406,7 @@ public class CatalogueModListScreen extends Screen
     private void setActiveTooltip(String content)
     {
         this.activeTooltip = this.font.split(new StringTextComponent(content), Math.min(200, this.width));
+        this.tooltipYOffset = 0;
     }
 
     private void setSelectedModInfo(IModInfo selectedModInfo)
