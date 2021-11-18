@@ -37,6 +37,7 @@ import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraftforge.common.util.Size2i;
 import net.minecraftforge.fml.ForgeI18n;
+import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.VersionChecker;
 import net.minecraftforge.fml.client.ConfigGuiHandler;
 import net.minecraftforge.fml.loading.FMLEnvironment;
@@ -61,7 +62,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 /**
@@ -171,10 +171,15 @@ public class CatalogueModListScreen extends Screen
         {
             configurable.getConfigElement(key).ifPresent(o ->
             {
-                Style style = Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, o.toString()));
-                this.handleComponentClicked(style);
+                this.openLink(o.toString());
             });
         }
+    }
+
+    private void openLink(String url)
+    {
+        Style style = Style.EMPTY.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url));
+        this.handleComponentClicked(style);
     }
 
     @Override
@@ -185,6 +190,23 @@ public class CatalogueModListScreen extends Screen
         this.drawModList(matrixStack, mouseX, mouseY, partialTicks);
         this.drawModInfo(matrixStack, mouseX, mouseY, partialTicks);
         super.render(matrixStack, mouseX, mouseY, partialTicks);
+
+        Optional<? extends ModContainer> optional = net.minecraftforge.fml.ModList.get().getModContainerById("catalogue");
+        optional.ifPresent(container -> this.loadAndCacheLogo(container.getModInfo()));
+        Pair<ResourceLocation, Size2i> pair = LOGO_CACHE.get("catalogue");
+        if(pair != null && pair.getLeft() != null)
+        {
+            ResourceLocation textureId = pair.getLeft();
+            Size2i size = pair.getRight();
+            Minecraft.getInstance().getTextureManager().bind(textureId);
+            AbstractGui.blit(matrixStack, 10, 9, 10, 10, 0.0F, 0.0F, size.width, size.height, size.width, size.height);
+        }
+
+        if(ScreenUtil.isMouseWithin(10, 9, 10, 10, mouseX, mouseY))
+        {
+            this.setActiveTooltip(new TranslationTextComponent("catalogue.gui.info").getString());
+            this.tooltipYOffset = 10;
+        }
 
         if(this.modFolderButton.isMouseOver(mouseX, mouseY))
         {
@@ -252,6 +274,7 @@ public class CatalogueModListScreen extends Screen
         if(ScreenUtil.isMouseWithin(this.modList.getRight() - 14, 7, 14, 14, mouseX, mouseY))
         {
             this.setActiveTooltip(I18n.get("fml.menu.mods.filter_updates"));
+            this.tooltipYOffset = 10;
         }
     }
 
@@ -385,6 +408,11 @@ public class CatalogueModListScreen extends Screen
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button)
     {
+        if(ScreenUtil.isMouseWithin(10, 9, 10, 10, (int) mouseX, (int) mouseY) && button == GLFW.GLFW_MOUSE_BUTTON_1)
+        {
+            this.openLink("https://www.curseforge.com/minecraft/mc-mods/catalogue");
+            return true;
+        }
         if(this.selectedModInfo != null)
         {
             int contentLeft = this.modList.getRight() + 12 + 10;
