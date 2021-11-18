@@ -292,11 +292,11 @@ public class CatalogueModListScreen extends Screen
         fill(matrixStack, this.modList.getRight() + 12, 0, this.width, this.height, 0x66000000);
         this.descriptionList.render(matrixStack, mouseX, mouseY, partialTicks);
 
+        int contentLeft = this.modList.getRight() + 12 + 10;
+        int contentWidth = this.width - contentLeft - 10;
+
         if(this.selectedModInfo != null)
         {
-            int contentLeft = this.modList.getRight() + 12 + 10;
-            int contentWidth = this.width - contentLeft - 10;
-
             // Draw mod logo
             this.drawLogo(matrixStack, contentWidth, contentLeft, 10, this.width - (this.modList.getRight() + 12 + 10) - 10, 50);
 
@@ -366,6 +366,11 @@ public class CatalogueModListScreen extends Screen
             {
                 this.drawStringWithLabel(matrixStack, "fml.menu.mods.info.authors", authors.get().toString(), contentLeft, labelOffset, contentWidth, mouseX, mouseY, TextFormatting.GRAY, TextFormatting.WHITE);
             }
+        }
+        else
+        {
+            ITextComponent message = new TranslationTextComponent("catalogue.gui.no_selection").withStyle(TextFormatting.GRAY);
+            drawCenteredString(matrixStack, this.font, message, contentLeft + contentWidth / 2, this.height / 2 - 5, 0xFFFFFF);
         }
     }
 
