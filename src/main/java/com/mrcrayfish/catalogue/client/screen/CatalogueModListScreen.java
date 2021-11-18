@@ -215,7 +215,7 @@ public class CatalogueModListScreen extends Screen
 
         if(this.activeTooltip != null)
         {
-            this.renderTooltip(poseStack, this.activeTooltip, mouseX, mouseY, this.font);
+            this.renderTooltip(poseStack, this.activeTooltip, mouseX, mouseY + this.tooltipYOffset, this.font);
             this.tooltipYOffset = 0;
         }
     }
