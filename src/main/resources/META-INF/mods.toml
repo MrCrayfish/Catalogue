@@ -9,6 +9,7 @@ version="1.4.0"
 displayName="Catalogue"
 authors="MrCrayfish"
 logoFile="catalogue.png"
+logoBlur=false
 displayURL="https://www.curseforge.com/minecraft/mc-mods/catalogue"
 updateJSONURL="https://mrcrayfish.com/modupdatejson?id=catalogue"
 description="Updates Forge's mod list with a new and improved design"
