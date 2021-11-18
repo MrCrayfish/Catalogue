@@ -36,20 +36,18 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.common.util.Size2i;
-import net.minecraftforge.fml.ForgeI18n;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.VersionChecker;
-import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.fml.loading.moddiscovery.ModFileInfo;
 import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
 import net.minecraftforge.fmlclient.ConfigGuiHandler;
 import net.minecraftforge.fmllegacy.ForgeI18n;
-import net.minecraftforge.fmllegacy.packs.ModFileResourcePack;
 import net.minecraftforge.fmllegacy.packs.ResourcePackLoader;
 import net.minecraftforge.forgespi.language.IConfigurable;
 import net.minecraftforge.forgespi.language.IModInfo;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.resource.PathResourcePack;
 import net.minecraftforge.versions.forge.ForgeVersion;
 import org.apache.commons.lang3.tuple.Pair;
 import org.lwjgl.glfw.GLFW;
@@ -199,13 +197,14 @@ public class CatalogueModListScreen extends Screen
         {
             ResourceLocation textureId = pair.getLeft();
             Size2i size = pair.getRight();
-            Minecraft.getInstance().getTextureManager().bind(textureId);
+            RenderSystem.setShaderTexture(0, textureId);
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
             Screen.blit(poseStack, 10, 9, 10, 10, 0.0F, 0.0F, size.width, size.height, size.width, size.height);
         }
 
         if(ScreenUtil.isMouseWithin(10, 9, 10, 10, mouseX, mouseY))
         {
-            this.setActiveTooltip(new TranslationTextComponent("catalogue.gui.info").getString());
+            this.setActiveTooltip(new TranslatableComponent("catalogue.gui.info").getString());
             this.tooltipYOffset = 10;
         }
 
@@ -216,7 +215,7 @@ public class CatalogueModListScreen extends Screen
 
         if(this.activeTooltip != null)
         {
-            this.renderToolTip(poseStack, this.activeTooltip, mouseX, mouseY, this.font);
+            this.renderTooltip(poseStack, this.activeTooltip, mouseX, mouseY, this.font);
             this.tooltipYOffset = 0;
         }
     }
@@ -372,7 +371,7 @@ public class CatalogueModListScreen extends Screen
         }
         else
         {
-            Component message = new TranslatableComponent("catalogue.gui.no_selection").withStyle(TextFormatting.GRAY);
+            Component message = new TranslatableComponent("catalogue.gui.no_selection").withStyle(ChatFormatting.GRAY);
             drawCenteredString(poseStack, this.font, message, contentLeft + contentWidth / 2, this.height / 2 - 5, 0xFFFFFF);
         }
     }
@@ -534,7 +533,7 @@ public class CatalogueModListScreen extends Screen
                 return;
             }
 
-            ModFileResourcePack resourcePack = ResourcePackLoader.getResourcePackFor(info.getModId()).orElse(ResourcePackLoader.getResourcePackFor("forge").orElseThrow(() -> new RuntimeException("Can't find forge, WHAT!")));
+            PathResourcePack resourcePack = ResourcePackLoader.getPackFor(info.getModId()).orElse(ResourcePackLoader.getPackFor("forge").orElseThrow(() -> new RuntimeException("Can't find forge, WHAT!")));
             try(InputStream is = resourcePack.getRootResource(s); NativeImage logo = NativeImage.read(is))
             {
                 TextureManager textureManager = this.getMinecraft().getTextureManager();
@@ -567,7 +566,7 @@ public class CatalogueModListScreen extends Screen
                 return;
             }
 
-            ModFileResourcePack resourcePack = ResourcePackLoader.getResourcePackFor(info.getModId()).orElse(ResourcePackLoader.getResourcePackFor("forge").orElseThrow(() -> new RuntimeException("Can't find forge, WHAT!")));
+            PathResourcePack resourcePack = ResourcePackLoader.getPackFor(info.getModId()).orElse(ResourcePackLoader.getPackFor("forge").orElseThrow(() -> new RuntimeException("Can't find forge, WHAT!")));
             try(InputStream is = resourcePack.getRootResource(s); NativeImage icon = NativeImage.read(is))
             {
                 TextureManager textureManager = this.getMinecraft().getTextureManager();
@@ -589,7 +588,7 @@ public class CatalogueModListScreen extends Screen
                 return;
             }
 
-            ModFileResourcePack resourcePack = ResourcePackLoader.getResourcePackFor(info.getModId()).orElse(ResourcePackLoader.getResourcePackFor("forge").orElseThrow(() -> new RuntimeException("Can't find forge, WHAT!")));
+            PathResourcePack resourcePack = ResourcePackLoader.getPackFor(info.getModId()).orElse(ResourcePackLoader.getPackFor("forge").orElseThrow(() -> new RuntimeException("Can't find forge, WHAT!")));
             try(InputStream is = resourcePack.getRootResource(s); NativeImage logo = NativeImage.read(is))
             {
                 if(logo.getWidth() == logo.getHeight())
