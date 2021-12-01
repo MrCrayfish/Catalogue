@@ -35,19 +35,19 @@ import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraftforge.client.ConfigGuiHandler;
+import net.minecraftforge.common.ForgeI18n;
 import net.minecraftforge.common.util.Size2i;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.VersionChecker;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.fml.loading.moddiscovery.ModFileInfo;
 import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
-import net.minecraftforge.fmlclient.ConfigGuiHandler;
-import net.minecraftforge.fmllegacy.ForgeI18n;
-import net.minecraftforge.fmllegacy.packs.ResourcePackLoader;
 import net.minecraftforge.forgespi.language.IConfigurable;
 import net.minecraftforge.forgespi.language.IModInfo;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.resource.PathResourcePack;
+import net.minecraftforge.resource.ResourcePackLoader;
 import net.minecraftforge.versions.forge.ForgeVersion;
 import org.apache.commons.lang3.tuple.Pair;
 import org.lwjgl.glfw.GLFW;
@@ -121,7 +121,7 @@ public class CatalogueModListScreen extends Screen
         {
             if(this.selectedModInfo != null)
             {
-                ConfigGuiHandler.getGuiFactoryFor((ModInfo) this.selectedModInfo).map(f -> f.apply(this.minecraft, this)).ifPresent(newScreen -> this.getMinecraft().setScreen(newScreen));
+                ConfigGuiHandler.getGuiFactoryFor(this.selectedModInfo).map(f -> f.apply(this.minecraft, this)).ifPresent(newScreen -> this.getMinecraft().setScreen(newScreen));
             }
         }));
         this.configButton.visible = false;
