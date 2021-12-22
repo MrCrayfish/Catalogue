@@ -1,5 +1,6 @@
 {
+=======
     "fml.menu.mods.filter_updates": "Mostra solo mod aggiornate",
-    "catalogue.gui.no_selection": "No mod selected...",
-    "catalogue.gui.info": "This menu was redesigned by Catalogue. Click here to open the CurseForge page for this mod!"
+    "catalogue.gui.no_selection": "Nessuna mod selezionata...",
+    "catalogue.gui.info": "Questo menu è stato ridisegnato da Catalog. Clicca qui per aprire la pagina di CurseForge per questa mod!"
 }
