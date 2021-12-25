@@ -25,6 +25,7 @@ import net.minecraft.client.resources.language.I18n;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.commands.arguments.item.ItemParser;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
@@ -797,7 +798,12 @@ public class CatalogueModListScreen extends Screen
                 try
                 {
                     ItemParser parser = new ItemParser(new StringReader(itemIcon), false).parse();
-                    ItemStack item = new ItemStack(parser.getItem(), 1, parser.getNbt());
+                    ItemStack item = new ItemStack(parser.getItem(), 1);
+                    CompoundTag nbt = parser.getNbt();
+                    if (nbt != null)
+                    {
+                        item.getOrCreateTag().merge(nbt);
+                    }
                     ITEM_CACHE.put(this.info.getModId(), item);
                     return item;
                 }
