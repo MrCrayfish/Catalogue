@@ -751,7 +751,17 @@ public class CatalogueModListScreen extends Screen
             }
             else
             {
-                CatalogueModListScreen.this.getMinecraft().getItemRenderer().renderGuiItem(this.getItemIcon(), left + 4, top + 2);
+                // Some items from mods utilise the player or world instance to render. This means
+                // rendering the item from the main menu may result in a crash since mods don't check
+                // for null pointers. Switches the icon to a grass block if an exception occurs.
+                try
+                {
+                    CatalogueModListScreen.this.getMinecraft().getItemRenderer().renderGuiItem(this.getItemIcon(), left + 4, top + 2);
+                }
+                catch(Exception e)
+                {
+                    ITEM_CACHE.put(this.info.getModId(), new ItemStack(Items.GRASS_BLOCK));
+                }
             }
 
             // Draws an icon if there is an update for the mod
