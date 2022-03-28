@@ -493,6 +493,7 @@ public class CatalogueModListScreen extends Screen
             RenderSystem.setShader(GameRenderer::getPositionColorTexShader);
             RenderSystem.setShaderTexture(0, logoResource);
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+            RenderSystem.enableBlend();
 
             int width = size.width;
             int height = size.height;
@@ -511,6 +512,8 @@ public class CatalogueModListScreen extends Screen
             y += (maxHeight - height) / 2;
 
             Screen.blit(poseStack, x, y, width, height, 0.0F, 0.0F, size.width, size.height, size.width, size.height);
+
+            RenderSystem.disableBlend();
         }
     }
 
@@ -747,7 +750,9 @@ public class CatalogueModListScreen extends Screen
                 RenderSystem.setShader(GameRenderer::getPositionColorTexShader);
                 RenderSystem.setShaderTexture(0, logoResource);
                 RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+                RenderSystem.enableBlend();
                 Screen.blit(poseStack, left + 4, top + 2, 16, 16, 0.0F, 0.0F, size.width, size.height, size.width, size.height);
+                RenderSystem.disableBlend();
             }
             else
             {
