@@ -487,8 +487,8 @@ public class CatalogueModListScreen extends Screen
             }
 
             Minecraft.getInstance().getTextureManager().bind(logoResource);
-            RenderSystem.enableBlend();
             RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+            RenderSystem.enableBlend();
 
             int width = size.width;
             int height = size.height;
@@ -507,6 +507,8 @@ public class CatalogueModListScreen extends Screen
             y += (maxHeight - height) / 2;
 
             AbstractGui.blit(matrixStack, x, y, width, height, 0.0F, 0.0F, size.width, size.height, size.width, size.height);
+
+            RenderSystem.disableBlend();
         }
     }
 
@@ -735,9 +737,10 @@ public class CatalogueModListScreen extends Screen
                 }
 
                 Minecraft.getInstance().getTextureManager().bind(logoResource);
-                RenderSystem.enableBlend();
                 RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+                RenderSystem.enableBlend();
                 AbstractGui.blit(matrixStack, left + 4, top + 2, 16, 16, 0.0F, 0.0F, size.width, size.height, size.width, size.height);
+                RenderSystem.disableBlend();
             }
             else
             {
