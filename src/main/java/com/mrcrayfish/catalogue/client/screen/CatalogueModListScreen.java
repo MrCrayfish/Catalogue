@@ -741,7 +741,14 @@ public class CatalogueModListScreen extends Screen
             }
             else
             {
-                CatalogueModListScreen.this.getMinecraft().getItemRenderer().renderGuiItem(new ItemStack(this.getItemIcon()), left + 4, top + 2);
+                try
+                {
+                    CatalogueModListScreen.this.getMinecraft().getItemRenderer().renderGuiItem(new ItemStack(this.getItemIcon()), left + 4, top + 2);
+                }
+                catch(Exception e)
+                {
+                    ITEM_CACHE.put(this.info.getModId(), Items.GRASS_BLOCK);
+                }
             }
 
             // Draws an icon if there is an update for the mod
