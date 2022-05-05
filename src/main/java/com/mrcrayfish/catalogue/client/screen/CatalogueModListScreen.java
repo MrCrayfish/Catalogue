@@ -2,6 +2,8 @@ package com.mrcrayfish.catalogue.client.screen;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mrcrayfish.catalogue.Catalogue;
 import com.mrcrayfish.catalogue.client.ScreenUtil;
 import com.mrcrayfish.catalogue.client.screen.widget.CatalogueCheckBoxButton;
@@ -21,6 +23,7 @@ import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.resources.I18n;
+import net.minecraft.command.arguments.ItemParser;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -74,7 +77,7 @@ public class CatalogueModListScreen extends Screen
     private static final ResourceLocation VERSION_CHECK_ICONS = new ResourceLocation(ForgeVersion.MOD_ID, "textures/gui/version_check_icons.png");
     private static final Map<String, Pair<ResourceLocation, Size2i>> LOGO_CACHE = new HashMap<>();
     private static final Map<String, Pair<ResourceLocation, Size2i>> ICON_CACHE = new HashMap<>();
-    private static final Map<String, Item> ITEM_CACHE = new HashMap<>();
+    private static final Map<String, ItemStack> ITEM_CACHE = new HashMap<>();
 
     private TextFieldWidget searchTextField;
     private ModList modList;
@@ -746,11 +749,11 @@ public class CatalogueModListScreen extends Screen
             {
                 try
                 {
-                    CatalogueModListScreen.this.getMinecraft().getItemRenderer().renderGuiItem(new ItemStack(this.getItemIcon()), left + 4, top + 2);
+                    CatalogueModListScreen.this.getMinecraft().getItemRenderer().renderGuiItem(this.getItemIcon(), left + 4, top + 2);
                 }
                 catch(Exception e)
                 {
-                    ITEM_CACHE.put(this.info.getModId(), Items.GRASS_BLOCK);
+                    ITEM_CACHE.put(this.info.getModId(), new ItemStack(Items.GRASS_BLOCK));
                 }
             }
 
@@ -765,7 +768,7 @@ public class CatalogueModListScreen extends Screen
             }
         }
 
-        private Item getItemIcon()
+        private ItemStack getItemIcon()
         {
             if(ITEM_CACHE.containsKey(this.info.getModId()))
             {
@@ -773,13 +776,14 @@ public class CatalogueModListScreen extends Screen
             }
 
             // Put grass as default item icon
-            ITEM_CACHE.put(this.info.getModId(), Items.GRASS_BLOCK);
+            ITEM_CACHE.put(this.info.getModId(), new ItemStack(Items.GRASS_BLOCK));
 
             // Special case for Forge to set item icon to anvil
             if(this.info.getModId().equals("forge"))
             {
-                ITEM_CACHE.put("forge", Items.ANVIL);
-                return Items.ANVIL;
+                ItemStack anvil = new ItemStack(Items.ANVIL);
+                ITEM_CACHE.put("forge", anvil);
+                return anvil;
             }
 
             // Gets the raw item icon resource string
@@ -792,31 +796,29 @@ public class CatalogueModListScreen extends Screen
 
             if(!itemIcon.isEmpty())
             {
-                ResourceLocation resource = ResourceLocation.tryParse(itemIcon);
-                if(resource != null)
+                try
                 {
-                    Item item = ForgeRegistries.ITEMS.getValue(resource);
-                    if(item != null)
-                    {
-                        ITEM_CACHE.put(this.info.getModId(), item);
-                        return item;
-                    }
+                    ItemParser parser = new ItemParser(new StringReader(itemIcon), false).parse();
+                    ItemStack item = new ItemStack(parser.getItem(), 1, parser.getNbt());
+                    ITEM_CACHE.put(this.info.getModId(), item);
+                    return item;
                 }
+                catch(CommandSyntaxException ignored) {}
             }
 
             // If the mod doesn't specify an item to use, Catalogue will attempt to get an item from the mod
-            Optional<Item> optional = ForgeRegistries.ITEMS.getValues().stream().filter(item -> item.getRegistryName().getNamespace().equals(this.info.getModId())).findFirst();
+            Optional<ItemStack> optional = ForgeRegistries.ITEMS.getValues().stream().filter(item -> item.getRegistryName().getNamespace().equals(this.info.getModId())).map(ItemStack::new).findFirst();
             if(optional.isPresent())
             {
-                Item item = optional.get();
-                if(item != Items.AIR)
+                ItemStack item = optional.get();
+                if(item.isEmpty())
                 {
                     ITEM_CACHE.put(this.info.getModId(), item);
                     return item;
                 }
             }
 
-            return Items.GRASS_BLOCK;
+            return new ItemStack(Items.GRASS_BLOCK);
         }
 
         private ITextComponent getFormattedModName()
