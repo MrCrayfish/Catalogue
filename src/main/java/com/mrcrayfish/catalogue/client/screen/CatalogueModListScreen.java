@@ -811,7 +811,7 @@ public class CatalogueModListScreen extends Screen
             if(optional.isPresent())
             {
                 ItemStack item = optional.get();
-                if(item.isEmpty())
+                if(!item.isEmpty())
                 {
                     ITEM_CACHE.put(this.info.getModId(), item);
                     return item;
