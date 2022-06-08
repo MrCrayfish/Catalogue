@@ -25,16 +25,17 @@ import net.minecraft.client.resources.language.I18n;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.commands.arguments.item.ItemParser;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.Registry;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.client.ConfigGuiHandler;
@@ -91,14 +92,14 @@ public class CatalogueModListScreen extends Screen
 
     public CatalogueModListScreen()
     {
-        super(TextComponent.EMPTY);
+        super(CommonComponents.EMPTY);
     }
 
     @Override
     protected void init()
     {
         super.init();
-        this.searchTextField = new EditBox(this.font, 11, 25, 148, 20, TextComponent.EMPTY);
+        this.searchTextField = new EditBox(this.font, 11, 25, 148, 20, CommonComponents.EMPTY);
         this.searchTextField.setResponder(s -> {
             this.updateSearchField(s);
             this.modList.filterAndUpdateList(s);
@@ -119,7 +120,7 @@ public class CatalogueModListScreen extends Screen
         int contentLeft = this.modList.getRight() + 12 + padding;
         int contentWidth = this.width - contentLeft - padding;
         int buttonWidth = (contentWidth - padding) / 3;
-        this.configButton = this.addRenderableWidget(new CatalogueIconButton(contentLeft, 105, 10, 0, buttonWidth, new TranslatableComponent("fml.menu.mods.config"), onPress ->
+        this.configButton = this.addRenderableWidget(new CatalogueIconButton(contentLeft, 105, 10, 0, buttonWidth, Component.translatable("fml.menu.mods.config"), onPress ->
         {
             if(this.selectedModInfo != null)
             {
@@ -127,11 +128,11 @@ public class CatalogueModListScreen extends Screen
             }
         }));
         this.configButton.visible = false;
-        this.websiteButton = this.addRenderableWidget(new CatalogueIconButton(contentLeft + buttonWidth + 5, 105, 20, 0, buttonWidth, new TextComponent("Website"), onPress -> {
+        this.websiteButton = this.addRenderableWidget(new CatalogueIconButton(contentLeft + buttonWidth + 5, 105, 20, 0, buttonWidth, Component.literal("Website"), onPress -> {
             this.openLink("displayURL", (IConfigurable) this.selectedModInfo);
         }));
         this.websiteButton.visible = false;
-        this.issueButton = this.addRenderableWidget(new CatalogueIconButton(contentLeft + buttonWidth + buttonWidth + 10, 105, 30, 0, buttonWidth, new TextComponent("Submit Bug"), onPress -> {
+        this.issueButton = this.addRenderableWidget(new CatalogueIconButton(contentLeft + buttonWidth + buttonWidth + 10, 105, 30, 0, buttonWidth, Component.literal("Submit Bug"), onPress -> {
             this.openLink("issueTrackerURL", this.selectedModInfo != null ? ((ModFileInfo) this.selectedModInfo.getOwningFile()) : null);
         }));
         this.issueButton.visible = false;
@@ -206,13 +207,13 @@ public class CatalogueModListScreen extends Screen
 
         if(ScreenUtil.isMouseWithin(10, 9, 10, 10, mouseX, mouseY))
         {
-            this.setActiveTooltip(new TranslatableComponent("catalogue.gui.info").getString());
+            this.setActiveTooltip(Component.translatable("catalogue.gui.info").getString());
             this.tooltipYOffset = 10;
         }
 
         if(this.modFolderButton.isMouseOver(mouseX, mouseY))
         {
-            this.setActiveTooltip(new TranslatableComponent("fml.button.open.mods.folder").getString());
+            this.setActiveTooltip(Component.translatable("fml.button.open.mods.folder").getString());
         }
 
         if(this.activeTooltip != null)
@@ -235,7 +236,7 @@ public class CatalogueModListScreen extends Screen
     {
         if(value.isEmpty())
         {
-            this.searchTextField.setSuggestion(new TranslatableComponent("fml.menu.mods.search").append(new TextComponent("...")).getString());
+            this.searchTextField.setSuggestion(Component.translatable("fml.menu.mods.search").append(Component.literal("...")).getString());
         }
         else
         {
@@ -271,7 +272,7 @@ public class CatalogueModListScreen extends Screen
         blit(poseStack, this.modList.getRight() - 24, 10, 24, 0, 8, 8, 64, 16);
 
         this.modList.render(poseStack, mouseX, mouseY, partialTicks);
-        drawString(poseStack, this.font, new TextComponent(ForgeI18n.parseMessage("fml.menu.mods.title")).withStyle(ChatFormatting.BOLD).withStyle(ChatFormatting.WHITE), 70, 10, 0xFFFFFF);
+        drawString(poseStack, this.font, Component.literal(ForgeI18n.parseMessage("fml.menu.mods.title")).withStyle(ChatFormatting.BOLD).withStyle(ChatFormatting.WHITE), 70, 10, 0xFFFFFF);
         this.searchTextField.render(poseStack, mouseX, mouseY, partialTicks);
 
         if(ScreenUtil.isMouseWithin(this.modList.getRight() - 14, 7, 14, 14, mouseX, mouseY))
@@ -311,7 +312,7 @@ public class CatalogueModListScreen extends Screen
             poseStack.popPose();
 
             // Draw version
-            Component modId = new TextComponent("Mod ID: " + this.selectedModInfo.getModId()).withStyle(ChatFormatting.DARK_GRAY);
+            Component modId = Component.literal("Mod ID: " + this.selectedModInfo.getModId()).withStyle(ChatFormatting.DARK_GRAY);
             int modIdWidth = this.font.width(modId);
             drawString(poseStack, this.font, modId, contentLeft + contentWidth - modIdWidth, 92, 0xFFFFFF);
 
@@ -373,7 +374,7 @@ public class CatalogueModListScreen extends Screen
         }
         else
         {
-            Component message = new TranslatableComponent("catalogue.gui.no_selection").withStyle(ChatFormatting.GRAY);
+            Component message = Component.translatable("catalogue.gui.no_selection").withStyle(ChatFormatting.GRAY);
             drawCenteredString(poseStack, this.font, message, contentLeft + contentWidth / 2, this.height / 2 - 5, 0xFFFFFF);
         }
     }
@@ -400,8 +401,8 @@ public class CatalogueModListScreen extends Screen
         if(this.font.width(formatted) > maxWidth)
         {
             content = this.font.plainSubstrByWidth(content, maxWidth - this.font.width(label) - 7) + "...";
-            MutableComponent credits = new TextComponent(label).withStyle(labelColor);
-            credits.append(new TextComponent(content).withStyle(contentColor));
+            MutableComponent credits = Component.literal(label).withStyle(labelColor);
+            credits.append(Component.literal(content).withStyle(contentColor));
             drawString(poseStack, this.font, credits, x, y, 0xFFFFFF);
             if(ScreenUtil.isMouseWithin(x, y, maxWidth, 9, mouseX, mouseY)) // Sets the active tool tip if string is too long so users can still read it
             {
@@ -410,7 +411,7 @@ public class CatalogueModListScreen extends Screen
         }
         else
         {
-            drawString(poseStack, this.font, new TextComponent(label).withStyle(labelColor).append(new TextComponent(content).withStyle(contentColor)), x, y, 0xFFFFFF);
+            drawString(poseStack, this.font, Component.literal(label).withStyle(labelColor).append(Component.literal(content).withStyle(contentColor)), x, y, 0xFFFFFF);
         }
     }
 
@@ -442,7 +443,7 @@ public class CatalogueModListScreen extends Screen
 
     private void setActiveTooltip(String content)
     {
-        this.activeTooltip = this.font.split(new TextComponent(content), Math.min(200, this.width));
+        this.activeTooltip = this.font.split(Component.literal(content), Math.min(200, this.width));
         this.tooltipYOffset = 0;
     }
 
@@ -730,7 +731,7 @@ public class CatalogueModListScreen extends Screen
         {
             // Draws mod name and version
             drawString(poseStack, CatalogueModListScreen.this.font, this.getFormattedModName(), left + 24, top + 2, 0xFFFFFF);
-            drawString(poseStack, CatalogueModListScreen.this.font, new TextComponent(this.info.getVersion().toString()).withStyle(ChatFormatting.GRAY), left + 24, top + 12, 0xFFFFFF);
+            drawString(poseStack, CatalogueModListScreen.this.font, Component.literal(this.info.getVersion().toString()).withStyle(ChatFormatting.GRAY), left + 24, top + 12, 0xFFFFFF);
 
             CatalogueModListScreen.this.loadAndCacheIcon(this.info);
 
@@ -811,8 +812,8 @@ public class CatalogueModListScreen extends Screen
             {
                 try
                 {
-                    ItemParser parser = new ItemParser(new StringReader(itemIcon), false).parse();
-                    ItemStack item = new ItemStack(parser.getItem(), 1, parser.getNbt());
+                    ItemParser.ItemResult result = ItemParser.parseForItem(HolderLookup.forRegistry(Registry.ITEM), new StringReader(itemIcon));
+                    ItemStack item = new ItemStack(result.item().get(), 1, result.nbt());
                     ITEM_CACHE.put(this.info.getModId(), item);
                     return item;
                 }
@@ -820,7 +821,7 @@ public class CatalogueModListScreen extends Screen
             }
 
             // If the mod doesn't specify an item to use, Catalogue will attempt to get an item from the mod
-            Optional<ItemStack> optional = ForgeRegistries.ITEMS.getValues().stream().filter(item -> item.getRegistryName().getNamespace().equals(this.info.getModId())).map(ItemStack::new).findFirst();
+            Optional<ItemStack> optional = ForgeRegistries.ITEMS.getValues().stream().filter(item -> item.builtInRegistryHolder().key().location().getNamespace().equals(this.info.getModId())).map(ItemStack::new).findFirst();
             if(optional.isPresent())
             {
                 ItemStack item = optional.get();
@@ -842,7 +843,7 @@ public class CatalogueModListScreen extends Screen
             {
                 name = CatalogueModListScreen.this.font.plainSubstrByWidth(name, width - 10) + "...";
             }
-            MutableComponent title = new TextComponent(name);
+            MutableComponent title = Component.literal(name);
             if(this.info.getModId().equals("forge") || this.info.getModId().equals("minecraft"))
             {
                 title.withStyle(ChatFormatting.DARK_GRAY);
