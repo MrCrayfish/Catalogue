@@ -35,10 +35,9 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraftforge.client.ConfigGuiHandler;
+import net.minecraftforge.client.ConfigScreenHandler;
 import net.minecraftforge.common.ForgeI18n;
 import net.minecraftforge.common.util.Size2i;
 import net.minecraftforge.fml.ModContainer;
@@ -49,7 +48,7 @@ import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
 import net.minecraftforge.forgespi.language.IConfigurable;
 import net.minecraftforge.forgespi.language.IModInfo;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.resource.PathResourcePack;
+import net.minecraftforge.resource.PathPackResources;
 import net.minecraftforge.resource.ResourcePackLoader;
 import net.minecraftforge.versions.forge.ForgeVersion;
 import org.apache.commons.lang3.tuple.Pair;
@@ -124,7 +123,7 @@ public class CatalogueModListScreen extends Screen
         {
             if(this.selectedModInfo != null)
             {
-                ConfigGuiHandler.getGuiFactoryFor(this.selectedModInfo).map(f -> f.apply(this.minecraft, this)).ifPresent(newScreen -> this.getMinecraft().setScreen(newScreen));
+                ConfigScreenHandler.getScreenFactoryFor(this.selectedModInfo).map(f -> f.apply(this.minecraft, this)).ifPresent(newScreen -> this.getMinecraft().setScreen(newScreen));
             }
         }));
         this.configButton.visible = false;
@@ -454,7 +453,7 @@ public class CatalogueModListScreen extends Screen
         this.configButton.visible = true;
         this.websiteButton.visible = true;
         this.issueButton.visible = true;
-        this.configButton.active = ConfigGuiHandler.getGuiFactoryFor(selectedModInfo).isPresent();
+        this.configButton.active = ConfigScreenHandler.getScreenFactoryFor(selectedModInfo).isPresent();
         this.websiteButton.active = ((ModInfo) selectedModInfo).getConfigElement("displayURL").isPresent();
         this.issueButton.active = ((ModInfo) selectedModInfo).getOwningFile().getConfigElement("issueTrackerURL").isPresent();
         int contentLeft = this.modList.getRight() + 12 + 10;
@@ -539,7 +538,7 @@ public class CatalogueModListScreen extends Screen
                 return;
             }
 
-            PathResourcePack resourcePack = ResourcePackLoader.getPackFor(info.getModId()).orElse(ResourcePackLoader.getPackFor("forge").orElseThrow(() -> new RuntimeException("Can't find forge, WHAT!")));
+            PathPackResources resourcePack = ResourcePackLoader.getPackFor(info.getModId()).orElse(ResourcePackLoader.getPackFor("forge").orElseThrow(() -> new RuntimeException("Can't find forge, WHAT!")));
             try(InputStream is = resourcePack.getRootResource(s); NativeImage logo = NativeImage.read(is))
             {
                 TextureManager textureManager = this.getMinecraft().getTextureManager();
@@ -572,7 +571,7 @@ public class CatalogueModListScreen extends Screen
                 return;
             }
 
-            PathResourcePack resourcePack = ResourcePackLoader.getPackFor(info.getModId()).orElse(ResourcePackLoader.getPackFor("forge").orElseThrow(() -> new RuntimeException("Can't find forge, WHAT!")));
+            PathPackResources resourcePack = ResourcePackLoader.getPackFor(info.getModId()).orElse(ResourcePackLoader.getPackFor("forge").orElseThrow(() -> new RuntimeException("Can't find forge, WHAT!")));
             try(InputStream is = resourcePack.getRootResource(s); NativeImage icon = NativeImage.read(is))
             {
                 TextureManager textureManager = this.getMinecraft().getTextureManager();
@@ -594,7 +593,7 @@ public class CatalogueModListScreen extends Screen
                 return;
             }
 
-            PathResourcePack resourcePack = ResourcePackLoader.getPackFor(info.getModId()).orElse(ResourcePackLoader.getPackFor("forge").orElseThrow(() -> new RuntimeException("Can't find forge, WHAT!")));
+            PathPackResources resourcePack = ResourcePackLoader.getPackFor(info.getModId()).orElse(ResourcePackLoader.getPackFor("forge").orElseThrow(() -> new RuntimeException("Can't find forge, WHAT!")));
             try(InputStream is = resourcePack.getRootResource(s); NativeImage logo = NativeImage.read(is))
             {
                 if(logo.getWidth() == logo.getHeight())
