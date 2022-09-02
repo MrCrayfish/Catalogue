@@ -34,6 +34,14 @@ public class CatalogueIconButton extends Button
         this.v = v;
     }
 
+    public CatalogueIconButton(int x, int y, int u, int v, OnPress onPress, OnTooltip onTooltip)
+    {
+        super(x, y, 20, 20, CommonComponents.EMPTY, onPress, onTooltip);
+        this.label = CommonComponents.EMPTY;
+        this.u = u;
+        this.v = v;
+    }
+
     @Override
     public void renderButton(PoseStack poseStack, int mouseX, int mouseY, float partialTicks)
     {
@@ -53,7 +61,7 @@ public class CatalogueIconButton extends Button
         RenderSystem.setShaderColor(brightness, brightness, brightness, this.alpha);
         blit(poseStack, iconX, iconY, this.u, this.v, 10, 10, 64, 64);
         RenderSystem.setShaderColor(brightness, brightness, brightness, this.alpha);
-        int textColor = this.getFGColor() | Mth.ceil(this.alpha * 255.0F) << 24;
+        int textColor = (this.active ? 16777215 : 10526880) | Mth.ceil(this.alpha * 255.0F) << 24;
         drawString(poseStack, minecraft.font, this.label, iconX + 14, iconY + 1, textColor);
     }
 }

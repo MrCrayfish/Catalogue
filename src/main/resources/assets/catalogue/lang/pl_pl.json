@@ -1,5 +1,13 @@
 {
-    "fml.menu.mods.filter_updates": "Pokazywanie jedynie modów z aktualizacjami",
     "catalogue.gui.no_selection": "Brak wybranego moda...",
-    "catalogue.gui.info": "To menu zostało przeprojektowane przez moda Catalogue. Kliknij tutaj, aby otworzyć stronę tego moda w serwisie CurseForge!"
+    "catalogue.gui.info": "To menu zostało przeprojektowane przez moda Catalogue. Kliknij tutaj, aby otworzyć stronę tego moda w serwisie CurseForge!",
+    "catalogue.gui.internal_libraries": "Show Internal Libraries",
+    "catalogue.gui.mod_list": "Mods",
+    "catalogue.gui.search": "Search",
+    "catalogue.gui.config": "Config",
+    "catalogue.gui.open_mods_folder": "Open Mods Folder",
+    "catalogue.gui.licenses": "License(s): %s",
+    "catalogue.gui.authors": "Author(s): %s",
+    "catalogue.gui.contributors": "Contributor(s): %s",
+    "catalogue.gui.version": "Version: %s"
 }

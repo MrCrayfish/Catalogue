@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "catalogue",
+  "version": "${version}",
+  "name": "Catalogue",
+  "description": "Adds a mod list to the game with a modern and user friendly design",
+  "authors": [
+    "MrCrayfish"
+  ],
+  "contact": {
+    "homepage": "https://mrcrayfish.com/mods?id=catalogue",
+    "sources": "https://github.com/MrCrayfish/Catalogue",
+    "issues": "https://github.com/MrCrayfish/Catalogue/issues"
+  },
+  "license": "GPLv3",
+  "icon": "assets/catalogue/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "main": [
+      "com.mrcrayfish.catalogue.Catalogue"
+    ]
+  },
+  "mixins": [
+    "catalogue.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.14.9",
+    "fabric-api": "*",
+    "minecraft": "~1.19",
+    "java": ">=17"
+  },
+  "suggests": {
+    "another-mod": "*"
+  }
+}
