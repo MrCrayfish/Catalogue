@@ -5,6 +5,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mrcrayfish.catalogue.Catalogue;
 import com.mrcrayfish.catalogue.client.ScreenUtil;
 import com.mrcrayfish.catalogue.client.screen.widget.CatalogueCheckBoxButton;
 import com.mrcrayfish.catalogue.client.screen.widget.CatalogueIconButton;
@@ -41,6 +42,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
@@ -48,6 +50,9 @@ import org.lwjgl.glfw.GLFW;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -120,7 +125,7 @@ public class CatalogueModListScreen extends Screen
         {
             if(this.selectedModInfo != null)
             {
-                //ConfigScreenHandler.getScreenFactoryFor(this.selectedModInfo).map(f -> f.apply(this.minecraft, this)).ifPresent(newScreen -> this.getMinecraft().setScreen(newScreen));
+                openConfigScreen(this.selectedModInfo, this);
             }
         }));
         this.configButton.visible = false;
@@ -377,7 +382,7 @@ public class CatalogueModListScreen extends Screen
         this.configButton.visible = true;
         this.websiteButton.visible = true;
         this.issueButton.visible = true;
-        this.configButton.active = false; //ConfigScreenHandler.getScreenFactoryFor(info).isPresent();
+        this.configButton.active = info.getConfigFactory().isPresent();
         this.websiteButton.active = info.getHomepageLink().isPresent();
         this.issueButton.active = info.getIssueLink().isPresent();
         int contentLeft = this.modList.getRight() + 12 + 10;
@@ -822,6 +827,7 @@ public class CatalogueModListScreen extends Screen
         private final String contributors;
         private final String issueLink;
         private final String homepageLink;
+        private final Method configFactory;
 
         public ModInfo(ModContainer container)
         {
@@ -839,6 +845,7 @@ public class CatalogueModListScreen extends Screen
 
             String imageIcon = metadata.getIconPath(64).orElse(null);
             String itemIcon = null;
+            Method configFactory = null;
             CustomValue value = metadata.getCustomValue("catalogue");
             if(value != null && value.getType() == CustomValue.CvType.OBJECT)
             {
@@ -853,9 +860,15 @@ public class CatalogueModListScreen extends Screen
                 {
                     itemIcon = itemIconValue.getAsString();
                 }
+                CustomValue configFactoryValue = catalogueObj.get("configFactory");
+                if(configFactoryValue != null && configFactoryValue.getType() == CustomValue.CvType.STRING)
+                {
+                    configFactory = findConfigFactoryMethod(configFactoryValue.getAsString());
+                }
             }
             this.imageIcon = imageIcon;
             this.itemIcon = itemIcon;
+            this.configFactory = configFactory;
         }
 
         public String getId()
@@ -912,7 +925,58 @@ public class CatalogueModListScreen extends Screen
         {
             return Optional.ofNullable(this.homepageLink);
         }
+
+        public Optional<Method> getConfigFactory()
+        {
+            return Optional.ofNullable(this.configFactory);
+        }
     }
 
     public record Size2i(int width, int height) {}
+
+    private static Method findConfigFactoryMethod(String className)
+    {
+        try
+        {
+            Class<?> configFactoryClass = Class.forName(className);
+            Method createConfigScreenMethod = configFactoryClass.getDeclaredMethod("createConfigScreen", Screen.class, ModContainer.class);
+            int mods = createConfigScreenMethod.getModifiers();
+            if(!Modifier.isPublic(mods))
+            {
+                throw new RuntimeException("createConfigScreen is not accessible for class: " + className);
+            }
+            if(!Modifier.isStatic(mods))
+            {
+                throw new RuntimeException("createConfigScreen is not static for class: " + className);
+            }
+            return createConfigScreenMethod;
+        }
+        catch(ClassNotFoundException e)
+        {
+            throw new RuntimeException("Unable to locate config factory class: " + className);
+        }
+        catch(NoSuchMethodException e)
+        {
+            throw new RuntimeException("Missing \"public static createConfigScreen(Screen,ModContainer)\" method for config factory class: " + className);
+        }
+    }
+
+    private static void openConfigScreen(ModInfo info, Screen currentScreen)
+    {
+        info.getConfigFactory().ifPresent(method ->
+        {
+            try
+            {
+                Object object = method.invoke(null, currentScreen, info.container);
+                if(object instanceof Screen configScreen)
+                {
+                    Minecraft.getInstance().setScreen(configScreen);
+                }
+            }
+            catch(InvocationTargetException | IllegalAccessException e)
+            {
+                throw new RuntimeException(e);
+            }
+        });
+    }
 }
