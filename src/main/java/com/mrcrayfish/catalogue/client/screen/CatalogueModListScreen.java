@@ -68,8 +68,8 @@ public class CatalogueModListScreen extends Screen
     private static final ResourceLocation MISSING_BANNER = new ResourceLocation("catalogue", "textures/gui/missing_banner.png");
     private static final Map<String, Pair<ResourceLocation, Size2i>> ICON_CACHE = new HashMap<>();
     private static final Map<String, ItemStack> ITEM_CACHE = new HashMap<>();
+    private static List<ModInfo> cachedInfo;
 
-    private final List<ModInfo> allMods;
     private EditBox searchTextField;
     private ModList modList;
     private ModInfo selectedModInfo;
@@ -85,7 +85,9 @@ public class CatalogueModListScreen extends Screen
     public CatalogueModListScreen()
     {
         super(CommonComponents.EMPTY);
-        this.allMods = FabricLoaderImpl.INSTANCE.getAllMods().stream().map(ModInfo::new).toList();
+        if(cachedInfo == null) {
+            cachedInfo = FabricLoaderImpl.INSTANCE.getAllMods().stream().map(ModInfo::new).toList();
+        }
         ICON_CACHE.clear();
     }
 
@@ -212,7 +214,7 @@ public class CatalogueModListScreen extends Screen
         }
         else
         {
-            Optional<ModInfo> optional = this.allMods.stream().filter(info -> {
+            Optional<ModInfo> optional = cachedInfo.stream().filter(info -> {
                 return info.getName().toLowerCase(Locale.ENGLISH).startsWith(value.toLowerCase(Locale.ENGLISH));
             }).min(Comparator.comparing(ModInfo::getName));
             if(optional.isPresent())
@@ -527,7 +529,7 @@ public class CatalogueModListScreen extends Screen
 
         public void filterAndUpdateList(String text)
         {
-            List<ModEntry> entries = allMods.stream()
+            List<ModEntry> entries = cachedInfo.stream()
                 .filter(info -> info.getName().toLowerCase(Locale.ENGLISH).contains(text.toLowerCase(Locale.ENGLISH)))
                 .filter(info -> !info.getId().startsWith("fabric") && !info.getId().startsWith("java") || libraryButton.selected())
                 .map(info -> new ModEntry(info, this))
@@ -806,7 +808,6 @@ public class CatalogueModListScreen extends Screen
         }
     }
 
-    //TODO cache instead of new every time screen is opened
     public static class ModInfo
     {
         private final ModContainer container;
