@@ -3,11 +3,15 @@ package com.mrcrayfish.catalogue.client.screen;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mrcrayfish.catalogue.client.ScreenUtil;
 import com.mrcrayfish.catalogue.client.screen.widget.CatalogueCheckBoxButton;
 import com.mrcrayfish.catalogue.client.screen.widget.CatalogueIconButton;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
+import net.fabricmc.loader.api.metadata.CustomValue;
+import net.fabricmc.loader.api.metadata.ModMetadata;
 import net.fabricmc.loader.api.metadata.Person;
 import net.fabricmc.loader.impl.FabricLoaderImpl;
 import net.minecraft.ChatFormatting;
@@ -22,9 +26,10 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.client.resources.language.I18n;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
+import net.minecraft.commands.arguments.item.ItemParser;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.CommonComponents;
@@ -150,22 +155,6 @@ public class CatalogueModListScreen extends Screen
         }
         this.updateSearchField(this.searchTextField.getValue());
     }
-
-    /**
-     * Opens a link with a url defined in the mod's info
-     *
-     * //@param key the key of the config element
-     */
-    /*private void openLink(String key, @Nullable IConfigurable configurable)
-    {
-        if(configurable != null)
-        {
-            configurable.getConfigElement(key).ifPresent(o ->
-            {
-                this.openLink(o.toString());
-            });
-        }
-    }*/
 
     private void openLink(String url)
     {
@@ -458,7 +447,7 @@ public class CatalogueModListScreen extends Screen
         // Fills an empty icon as icon may not be present
         ICON_CACHE.put(info.getId(), Pair.of(null, new Size2i(0, 0)));
 
-        info.getIconPath().ifPresent(path ->
+        info.getImageIcon().ifPresent(path ->
         {
             try(InputStream is = Files.newInputStream(path); NativeImage icon = NativeImage.read(is))
             {
@@ -662,27 +651,20 @@ public class CatalogueModListScreen extends Screen
                 return item;
             }
 
-            // Gets the raw item icon resource string
-            //TODO item icon
-            /*String itemIcon = (String) this.info.getModProperties().get("catalogueItemIcon");
-            if(itemIcon == null)
-            {
-                //Fallback to old method for backwards compatibility
-                itemIcon = (String) ((ModInfo) this.info).getConfigElement("itemIcon").orElse("");
-            }*/
-
-           /* if(!itemIcon.isEmpty())
+            // Try and get the item icon specified from the mod's metadata
+            Optional<String> itemIcon = this.info.getItemIcon();
+            if(itemIcon.isPresent())
             {
                 try
                 {
-                    ItemParser.ItemResult result = ItemParser.parseForItem(HolderLookup.forRegistry(Registry.ITEM), new StringReader(itemIcon));
+                    ItemParser.ItemResult result = ItemParser.parseForItem(HolderLookup.forRegistry(Registry.ITEM), new StringReader(itemIcon.get()));
                     ItemStack item = new ItemStack(result.item().value(), 1);
                     item.setTag(result.nbt());
                     ITEM_CACHE.put(this.info.getId(), item);
                     return item;
                 }
                 catch (CommandSyntaxException ignored) {}
-            }*/
+            }
 
             // If the mod doesn't specify an item to use, Catalogue will attempt to get an item from the mod
             Optional<ItemStack> optional = Registry.ITEM.stream().filter(item -> item.builtInRegistryHolder().key().location().getNamespace().equals(this.info.getId())).map(ItemStack::new).findFirst();
@@ -810,7 +792,7 @@ public class CatalogueModListScreen extends Screen
 
     private class StringEntry extends AbstractSelectionList.Entry<StringEntry>
     {
-        private String line;
+        private final String line;
 
         public StringEntry(String line)
         {
@@ -824,6 +806,7 @@ public class CatalogueModListScreen extends Screen
         }
     }
 
+    //TODO cache instead of new every time screen is opened
     public static class ModInfo
     {
         private final ModContainer container;
@@ -831,7 +814,8 @@ public class CatalogueModListScreen extends Screen
         private final String name;
         private final String description;
         private final String version;
-        private final String iconPath;
+        private final String imageIcon;
+        private final String itemIcon;
         private final String license;
         private final String authors;
         private final String contributors;
@@ -840,17 +824,37 @@ public class CatalogueModListScreen extends Screen
 
         public ModInfo(ModContainer container)
         {
+            ModMetadata metadata = container.getMetadata();
             this.container = container;
-            this.id = container.getMetadata().getId();
-            this.name = container.getMetadata().getName();
-            this.description = container.getMetadata().getDescription();
-            this.version = container.getMetadata().getVersion().getFriendlyString();
-            this.iconPath = container.getMetadata().getIconPath(64).orElse(null);
-            this.license = StringUtils.join(container.getMetadata().getLicense(), ", ");
-            this.authors = StringUtils.join(container.getMetadata().getAuthors().stream().map(Person::getName).collect(Collectors.toList()), ", ");
-            this.contributors = StringUtils.join(container.getMetadata().getContributors().stream().map(Person::getName).collect(Collectors.toList()), ", ");
-            this.issueLink = container.getMetadata().getContact().get("issues").orElse(null);
-            this.homepageLink = container.getMetadata().getContact().get("homepage").orElse(null);
+            this.id = metadata.getId();
+            this.name = metadata.getName();
+            this.description = metadata.getDescription();
+            this.version = metadata.getVersion().getFriendlyString();
+            this.license = StringUtils.join(metadata.getLicense(), ", ");
+            this.authors = StringUtils.join(metadata.getAuthors().stream().map(Person::getName).collect(Collectors.toList()), ", ");
+            this.contributors = StringUtils.join(metadata.getContributors().stream().map(Person::getName).collect(Collectors.toList()), ", ");
+            this.issueLink = metadata.getContact().get("issues").orElse(null);
+            this.homepageLink = metadata.getContact().get("homepage").orElse(null);
+
+            String imageIcon = metadata.getIconPath(64).orElse(null);
+            String itemIcon = null;
+            CustomValue value = metadata.getCustomValue("catalogue");
+            if(value != null && value.getType() == CustomValue.CvType.OBJECT)
+            {
+                CustomValue.CvObject catalogueObj = value.getAsObject();
+                CustomValue imageIconValue = catalogueObj.get("imageIcon");
+                if(imageIconValue != null && imageIconValue.getType() == CustomValue.CvType.STRING)
+                {
+                    imageIcon = imageIconValue.getAsString();
+                }
+                CustomValue itemIconValue = catalogueObj.get("itemIcon");
+                if(itemIconValue != null && itemIconValue.getType() == CustomValue.CvType.STRING)
+                {
+                    itemIcon = itemIconValue.getAsString();
+                }
+            }
+            this.imageIcon = imageIcon;
+            this.itemIcon = itemIcon;
         }
 
         public String getId()
@@ -873,9 +877,14 @@ public class CatalogueModListScreen extends Screen
             return this.version;
         }
 
-        public Optional<Path> getIconPath()
+        public Optional<Path> getImageIcon()
         {
-            return Optional.ofNullable(this.iconPath).flatMap(this.container::findPath);
+            return Optional.ofNullable(this.imageIcon).flatMap(this.container::findPath);
+        }
+
+        public Optional<String> getItemIcon()
+        {
+            return Optional.ofNullable(this.itemIcon);
         }
 
         public String getLicense()
