@@ -23,7 +23,7 @@ public class ScreenUtil
         int y = mc.getWindow().getHeight() - screenY * scale - boxHeight * scale;
         int width = Math.max(0, boxWidth * scale);
         int height = Math.max(0, boxHeight * scale);
-        RenderSystem.enableScissor(x, y, width, height); //TODO this might be weird now
+        RenderSystem.enableScissor(x, y, width, height);
     }
 
     public static boolean isMouseWithin(int x, int y, int width, int height, int mouseX, int mouseY)

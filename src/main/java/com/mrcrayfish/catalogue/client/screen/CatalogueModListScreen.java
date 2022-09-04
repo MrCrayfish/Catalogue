@@ -196,7 +196,6 @@ public class CatalogueModListScreen extends Screen
 
         if(this.activeTooltip != null)
         {
-            //TODO render tooltips
             this.renderTooltip(poseStack, this.activeTooltip, mouseX, mouseY + this.tooltipYOffset);
             this.tooltipYOffset = 0;
         }
@@ -338,8 +337,7 @@ public class CatalogueModListScreen extends Screen
      */
     private void drawStringWithLabel(PoseStack poseStack, String format, String text, int x, int y, int maxWidth, int mouseX, int mouseY, ChatFormatting labelColor, ChatFormatting contentColor)
     {
-        //TODO is this right?
-        String formatted = Component.translatable(format, text).getString(); // Attempting to keep Forge's lang since it's already support many languages
+        String formatted = Component.translatable(format, text).getString();
         String label = formatted.substring(0, formatted.indexOf(":") + 1);
         String content = formatted.substring(formatted.indexOf(":") + 1);
         if(this.font.width(formatted) > maxWidth)
@@ -697,9 +695,7 @@ public class CatalogueModListScreen extends Screen
                 name = CatalogueModListScreen.this.font.plainSubstrByWidth(name, width - 10) + "...";
             }
             MutableComponent title = Component.literal(name);
-
-            //TODO figure out which are standard mods with fabric
-            if(this.info.getId().equals("forge") || this.info.getId().equals("minecraft"))
+            if(this.info.getId().startsWith("fabric-") || this.info.getId().equals("minecraft") || this.info.getId().equals("java"))
             {
                 title.withStyle(ChatFormatting.DARK_GRAY);
             }
