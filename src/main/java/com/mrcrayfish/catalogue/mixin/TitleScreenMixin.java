@@ -2,7 +2,6 @@ package com.mrcrayfish.catalogue.mixin;
 
 import com.mrcrayfish.catalogue.client.screen.CatalogueModListScreen;
 import com.mrcrayfish.catalogue.client.screen.widget.CatalogueIconButton;
-import net.minecraft.client.gui.screens.OptionsScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.network.chat.Component;
