@@ -1,5 +1,7 @@
 package com.mrcrayfish.catalogue.client.screen;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -53,12 +55,14 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 /**
@@ -72,6 +76,7 @@ public class CatalogueModListScreen extends Screen
     private static final Map<String, Pair<ResourceLocation, Size2i>> ICON_CACHE = new HashMap<>();
     private static final Map<String, ItemStack> ITEM_CACHE = new HashMap<>();
     private static List<ModInfo> cachedInfo;
+    private static Map<String, BiFunction<Screen, ModContainer, Screen>> providers;
 
     private EditBox searchTextField;
     private ModList modList;
@@ -88,9 +93,8 @@ public class CatalogueModListScreen extends Screen
     public CatalogueModListScreen()
     {
         super(CommonComponents.EMPTY);
-        if(cachedInfo == null) {
-            cachedInfo = FabricLoaderImpl.INSTANCE.getAllMods().stream().map(ModInfo::new).toList();
-        }
+        if(cachedInfo == null) cachedInfo = FabricLoaderImpl.INSTANCE.getAllMods().stream().map(ModInfo::new).toList();
+        if(providers == null) providers = findConfigFactoryProviders();
         ICON_CACHE.clear();
     }
 
@@ -378,7 +382,7 @@ public class CatalogueModListScreen extends Screen
         this.configButton.visible = true;
         this.websiteButton.visible = true;
         this.issueButton.visible = true;
-        this.configButton.active = info.getConfigFactory().isPresent();
+        this.configButton.active = info.getConfigFactory().isPresent() || providers.containsKey(info.getId());
         this.websiteButton.active = info.getHomepageLink().isPresent();
         this.issueButton.active = info.getIssueLink().isPresent();
         int contentLeft = this.modList.getRight() + 12 + 10;
@@ -951,26 +955,98 @@ public class CatalogueModListScreen extends Screen
         }
         catch(NoSuchMethodException e)
         {
-            throw new RuntimeException("Missing \"public static createConfigScreen(Screen,ModContainer)\" method for config factory class: " + className);
+            // Method is optional
         }
+        return null;
     }
 
     private static void openConfigScreen(ModInfo info, Screen currentScreen)
     {
-        info.getConfigFactory().ifPresent(method ->
+        Optional<Method> optional = info.getConfigFactory();
+        if(optional.isPresent())
         {
             try
             {
-                Object object = method.invoke(null, currentScreen, info.container);
+                Object object = optional.get().invoke(null, currentScreen, info.container);
                 if(object instanceof Screen configScreen)
                 {
                     Minecraft.getInstance().setScreen(configScreen);
+                    return;
                 }
             }
             catch(InvocationTargetException | IllegalAccessException e)
             {
                 throw new RuntimeException(e);
             }
+        }
+
+        BiFunction<Screen, ModContainer, Screen> configFactory = providers.get(info.getId());
+        if(configFactory != null)
+        {
+            Screen configScreen = configFactory.apply(currentScreen, info.container);
+            if(configScreen != null)
+            {
+                Minecraft.getInstance().setScreen(configScreen);
+            }
+        }
+    }
+
+    private static Map<String, BiFunction<Screen, ModContainer, Screen>> findConfigFactoryProviders()
+    {
+        Map<String, BiFunction<Screen, ModContainer, Screen>> providers = new HashMap<>();
+        FabricLoader.getInstance().getAllMods().forEach(container ->
+        {
+            ModMetadata metadata = container.getMetadata();
+            CustomValue value = metadata.getCustomValue("catalogue");
+            if(value == null || value.getType() != CustomValue.CvType.OBJECT)
+                return;
+
+            CustomValue.CvObject catalogueObj = value.getAsObject();
+            CustomValue configFactoryValue = catalogueObj.get("configFactory");
+            if(configFactoryValue == null || configFactoryValue.getType() != CustomValue.CvType.STRING)
+                return;
+
+            String className = configFactoryValue.getAsString();
+            Optional.ofNullable(createConfigFactoryProvider(className)).ifPresent(map -> {
+                map.forEach(providers::putIfAbsent); // Only adds provider if not provided already
+            });
         });
+        return ImmutableMap.copyOf(providers);
+    }
+
+    private static Map<String, BiFunction<Screen, ModContainer, Screen>> createConfigFactoryProvider(String className)
+    {
+        try
+        {
+            Class<?> configFactoryClass = Class.forName(className);
+            Method createConfigProviderMethod = configFactoryClass.getDeclaredMethod("createConfigProvider");
+            int mods = createConfigProviderMethod.getModifiers();
+            if(!Modifier.isPublic(mods))
+            {
+                throw new RuntimeException("createConfigProvider is not accessible for class: " + className);
+            }
+            if(!Modifier.isStatic(mods))
+            {
+                throw new RuntimeException("createConfigProvider is not static for class: " + className);
+            }
+            if(createConfigProviderMethod.getReturnType() != Map.class)
+            {
+                throw new RuntimeException("createConfigProvider must return a Map<String, BiFunction<Screen, ModContainer, Screen>>");
+            }
+            return (Map<String, BiFunction<Screen, ModContainer, Screen>>) createConfigProviderMethod.invoke(null);
+        }
+        catch(ClassNotFoundException e)
+        {
+            throw new RuntimeException("Unable to locate config factory class: " + className);
+        }
+        catch(InvocationTargetException | IllegalAccessException e)
+        {
+            throw new RuntimeException(e);
+        }
+        catch(NoSuchMethodException e)
+        {
+            // Method is optional
+        }
+        return null;
     }
 }
