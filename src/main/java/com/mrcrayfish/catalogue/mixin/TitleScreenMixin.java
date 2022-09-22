@@ -27,7 +27,7 @@ public abstract class TitleScreenMixin extends Screen
         int x = this.width / 2;
         int y = this.height / 4 + 48;
         this.addRenderableWidget(new CatalogueIconButton(x - 124, y + 48, 30, 0, button -> {
-            this.minecraft.setScreen(new CatalogueModListScreen());
+            this.minecraft.setScreen(new CatalogueModListScreen(this));
         }, (button, poseStack, mouseX, mouseY) -> {
             this.renderTooltip(poseStack, Component.translatable("catalogue.gui.mod_list"), mouseX, mouseY);
         }));
