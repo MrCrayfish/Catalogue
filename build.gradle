@@ -6,8 +6,8 @@ plugins {
 sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
 
-archivesBaseName = project.archives_base_name
-version = project.mod_version
+archivesBaseName = "${project.mod_id}-fabric"
+version = "${project.mod_version}-${project.minecraft_version}"
 group = project.maven_group
 
 repositories {
@@ -57,15 +57,14 @@ jar {
 publishing {
 	publications {
 		mavenJava(MavenPublication) {
+			artifactId = "${project.mod_id}-fabric"
 			from components.java
 		}
 	}
 
-	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
 	repositories {
-		// Add repositories to publish to here.
-		// Notice: This block does NOT have the same function as the block in the top level.
-		// The repositories here will be used for publishing your artifact, not for
-		// retrieving dependencies.
+		maven {
+			url "file:///X:/localmaven/mcmods"
+		}
 	}
 }
