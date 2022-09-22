@@ -814,6 +814,7 @@ public class CatalogueModListScreen extends Screen
     public static class ModInfo
     {
         private final ModContainer container;
+        @Nullable private final ModContainer parent;
         private final String id;
         private final String name;
         private final String description;
@@ -863,6 +864,8 @@ public class CatalogueModListScreen extends Screen
                 {
                     configFactory = findConfigFactoryMethod(configFactoryValue.getAsString());
                 }
+
+                CustomValue parentModValue = catalogueObj.get("parentMod");
             }
             this.imageIcon = imageIcon;
             this.itemIcon = itemIcon;
