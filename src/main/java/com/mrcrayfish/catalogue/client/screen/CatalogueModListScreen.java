@@ -1,6 +1,5 @@
 package com.mrcrayfish.catalogue.client.screen;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -55,7 +54,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -78,6 +76,7 @@ public class CatalogueModListScreen extends Screen
     private static List<ModInfo> cachedInfo;
     private static Map<String, BiFunction<Screen, ModContainer, Screen>> providers;
 
+    private final Screen parentScreen;
     private EditBox searchTextField;
     private ModList modList;
     private ModInfo selectedModInfo;
@@ -90,11 +89,12 @@ public class CatalogueModListScreen extends Screen
     private int tooltipYOffset;
     private List<? extends FormattedCharSequence> activeTooltip;
 
-    public CatalogueModListScreen()
+    public CatalogueModListScreen(Screen parentScreen)
     {
         super(CommonComponents.EMPTY);
         if(cachedInfo == null) cachedInfo = FabricLoaderImpl.INSTANCE.getAllMods().stream().map(ModInfo::new).toList();
         if(providers == null) providers = findConfigFactoryProviders();
+        this.parentScreen = parentScreen;
         ICON_CACHE.clear();
     }
 
@@ -114,7 +114,7 @@ public class CatalogueModListScreen extends Screen
         this.modList.setRenderTopAndBottom(false);
         this.addWidget(this.modList);
         this.addRenderableWidget(new Button(10, this.modList.getBottom() + 8, 127, 20, CommonComponents.GUI_BACK, onPress -> {
-            this.minecraft.setScreen(null);
+            this.minecraft.setScreen(this.parentScreen);
         }));
         this.modFolderButton = this.addRenderableWidget(new CatalogueIconButton(140, this.modList.getBottom() + 8, 0, 0, onPress -> {
             Util.getPlatform().openFile(FabricLoader.getInstance().getGameDir().resolve("mods").toFile());
