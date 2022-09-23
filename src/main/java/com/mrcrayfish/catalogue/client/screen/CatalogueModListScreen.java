@@ -26,6 +26,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.gui.screens.OptionsScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.texture.DynamicTexture;
@@ -953,6 +954,9 @@ public class CatalogueModListScreen extends Screen
 
         public String getDescription()
         {
+            if (this.getId().equals("minecraft")) {
+                return "The base game.";
+            }
             return description;
         }
 
@@ -973,11 +977,17 @@ public class CatalogueModListScreen extends Screen
 
         public String getLicense()
         {
+            if (this.getId().equals("minecraft")) {
+                return "Minecraft EULA";
+            }
             return this.license;
         }
 
         public String getAuthors()
         {
+            if (this.getId().equals("minecraft")) {
+                return "Mojang Studios";
+            }
             return this.authors;
         }
 
@@ -988,22 +998,37 @@ public class CatalogueModListScreen extends Screen
 
         public Optional<String> getIssueLink()
         {
+            if (this.getId().equals("minecraft")) {
+                return Optional.of("https://bugs.mojang.com");
+            }
             return Optional.ofNullable(this.issueLink);
         }
 
         public Optional<String> getHomepageLink()
         {
+            if (this.getId().equals("minecraft")) {
+                return Optional.of("https://minecraft.net");
+            }
             return Optional.ofNullable(this.homepageLink);
         }
 
         public Optional<Method> getConfigFactory()
         {
+            if (this.getId().equals("minecraft")) {
+                try {
+                    return Optional.of(this.getClass().getMethod("openMinecraftOptions", Screen.class, ModContainer.class));
+                } catch (Exception ignored) {}
+            }
             return Optional.ofNullable(this.configFactory);
+        }
+
+        public static void openMinecraftOptions(Screen screen, ModContainer container) {
+            Minecraft.getInstance().setScreen(new OptionsScreen(screen, Minecraft.getInstance().options));
         }
 
         public Optional<ModContainer> getParentMod()
         {
-            if (this.getId().startsWith("fabric") && !this.getId().equals("fabric-api")) {
+            if (this.getId().startsWith("fabric") && !this.getId().equals("fabric-api") && container.getMetadata().containsCustomValue("fabric-api:module-lifecycle")) {
                 return FabricLoader.getInstance().getModContainer("fabric-api");
             }
             return Optional.ofNullable(this.parentMod);
@@ -1017,6 +1042,16 @@ public class CatalogueModListScreen extends Screen
 
         public boolean isLibrary()
         {
+            if (this.getId().startsWith("fabric") && container.getMetadata().containsCustomValue("fabric-api:module-lifecycle")) {
+                return true;
+            }
+            if (this.getId().startsWith("fabric") && (this.getId().equals("fabricloader") || container.getMetadata().getProvides().contains("fabricloader") || getId().equals("fabric") || getId().equals("fabric-api") || container.getMetadata().getProvides().contains("fabric") || container.getMetadata().getProvides().contains("fabric-api"))) {
+                return true;
+            }
+            var isGenerated = container.getMetadata().getCustomValue("fabric-loom:generated");
+            if ((isGenerated != null && isGenerated.getType() == CustomValue.CvType.BOOLEAN && isGenerated.getAsBoolean()) || "java".equals(id)) {
+                return true;
+            }
             return false;
         }
     }
