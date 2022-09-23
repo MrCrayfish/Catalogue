@@ -30,4 +30,9 @@ public class ScreenUtil
     {
         return mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
     }
+
+    public static boolean isMouseWithin(double x, double y, double width, double height, double mouseX, double mouseY)
+    {
+        return mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
+    }
 }

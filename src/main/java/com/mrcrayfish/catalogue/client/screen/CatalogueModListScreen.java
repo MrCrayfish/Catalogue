@@ -6,6 +6,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mrcrayfish.catalogue.Catalogue;
 import com.mrcrayfish.catalogue.client.ScreenUtil;
 import com.mrcrayfish.catalogue.client.screen.widget.CatalogueCheckBoxButton;
 import com.mrcrayfish.catalogue.client.screen.widget.CatalogueIconButton;
@@ -18,6 +19,8 @@ import net.fabricmc.loader.impl.FabricLoaderImpl;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.components.AbstractSelectionList;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Checkbox;
@@ -54,12 +57,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
@@ -70,7 +68,9 @@ public class CatalogueModListScreen extends Screen
 {
     private static final ResourceLocation CATALOGUE_ICON = new ResourceLocation("catalogue", "icon.png");
     private static final Comparator<ModEntry> SORT = Comparator.comparing(o -> o.getInfo().getName());
+    private static final Comparator<ModEntry> BACK_SORT = (o1, o2) -> o2.getInfo().getName().compareTo(o1.getInfo().getName());
     private static final ResourceLocation MISSING_BANNER = new ResourceLocation("catalogue", "textures/gui/missing_banner.png");
+    private static final ResourceLocation ICON_OVERLAY_LOCATION = new ResourceLocation("textures/gui/resource_packs.png");
     private static final Map<String, Pair<ResourceLocation, Size2i>> ICON_CACHE = new HashMap<>();
     private static final Map<String, ItemStack> ITEM_CACHE = new HashMap<>();
     private static List<ModInfo> cachedInfo;
@@ -484,9 +484,17 @@ public class CatalogueModListScreen extends Screen
 
     private class ModList extends AbstractSelectionList<ModEntry>
     {
+        private final List<ModEntry> entries;
+
         public ModList()
         {
             super(CatalogueModListScreen.this.minecraft, 150, CatalogueModListScreen.this.height, 46, CatalogueModListScreen.this.height - 35, 26);
+            List<ModEntry> entries = cachedInfo.stream().map(info -> new ModEntry(info, this)).collect(Collectors.toList());
+            for (ModEntry entry : entries) {
+                entry.grabParentMod(entries);
+                entry.grabChildrenMods(entries);
+            }
+            this.entries = entries;
         }
 
         public int getLeft()
@@ -515,6 +523,11 @@ public class CatalogueModListScreen extends Screen
         }
 
         @Override
+        protected int getRowTop(int i) {
+            return super.getRowTop(i);
+        }
+
+        @Override
         protected int getScrollbarPosition()
         {
             return this.getLeft() + this.width - 6;
@@ -534,14 +547,25 @@ public class CatalogueModListScreen extends Screen
 
         public void filterAndUpdateList(String text)
         {
-            List<ModEntry> entries = cachedInfo.stream()
-                .filter(info -> info.getName().toLowerCase(Locale.ENGLISH).contains(text.toLowerCase(Locale.ENGLISH)))
-                .filter(info -> !info.getId().startsWith("fabric") && !info.getId().startsWith("java") || libraryButton.selected())
-                .map(info -> new ModEntry(info, this))
-                .sorted(SORT)
-                .collect(Collectors.toList());
-            this.replaceEntries(entries);
+            this.replaceEntries(getEntries(text));
             this.setScrollAmount(0);
+        }
+
+        public List<ModEntry> getEntries(String text) {
+            List<ModEntry> entries = new ArrayList<>(this.entries.stream()
+                    .filter(info -> info.matches(text))
+                    .filter(info -> !info.info.isLibrary() || libraryButton.selected())
+                    .filter(info -> info.getInfo().getParentMod().isEmpty())
+                    .sorted(SORT).collect(Collectors.toList()));
+            List<ModEntry> childrens = this.entries.stream()
+                    .filter(info -> info.matches(text))
+                    .filter(info -> !info.info.isLibrary() || libraryButton.selected())
+                    .filter(info -> info.getInfo().getParentMod().isPresent())
+                    .sorted(BACK_SORT).toList();
+            for (ModEntry children : childrens) {
+                entries.add(entries.indexOf(children.parent)+1, children);
+            }
+            return entries.stream().filter(info -> info.parent == null || info.parent.isExpanded).collect(Collectors.toList());
         }
 
         @Nullable
@@ -588,6 +612,9 @@ public class CatalogueModListScreen extends Screen
     {
         private final ModInfo info;
         private final ModList list;
+        private boolean isExpanded = false;
+        private ModEntry parent;
+        private List<ModEntry> children;
 
         public ModEntry(ModInfo info, ModList list)
         {
@@ -598,6 +625,14 @@ public class CatalogueModListScreen extends Screen
         @Override
         public void render(PoseStack poseStack, int index, int top, int left, int rowWidth, int rowHeight, int mouseX, int mouseY, boolean hovered, float partialTicks)
         {
+            if (this.info.getParentMod().isPresent()) {
+                Gui.fill(poseStack, left + 2, top-2, left + 3, top+2 + rowHeight, 0xFFA0A0A0);
+                Gui.fill(poseStack, left + 2, top+rowHeight/2-1, left + 9, top+rowHeight/2, 0xFFA0A0A0);
+            }
+            poseStack.pushPose();
+            if (this.info.getParentMod().isPresent()) {
+                poseStack.translate(10, 0, 0);
+            }
             // Draws mod name and version
             drawString(poseStack, CatalogueModListScreen.this.font, this.getFormattedModName(), left + 24, top + 2, 0xFFFFFF);
             drawString(poseStack, CatalogueModListScreen.this.font, Component.literal(this.info.getVersion().toString()).withStyle(ChatFormatting.GRAY), left + 24, top + 12, 0xFFFFFF);
@@ -638,6 +673,14 @@ public class CatalogueModListScreen extends Screen
                     ITEM_CACHE.put(this.info.getId(), new ItemStack(Items.GRASS_BLOCK));
                 }
             }
+            poseStack.popPose();
+            if (hovered && -left + mouseX < 24 && -top + mouseY < 24 && !this.children.isEmpty()) {
+                RenderSystem.setShaderTexture(0, ICON_OVERLAY_LOCATION);
+                GuiComponent.fill(poseStack, left, top-1, left + 24, top + 23, 0xa0909090);
+                RenderSystem.setShader(GameRenderer::getPositionTexShader);
+                RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+            }
+
         }
 
         private ItemStack getItemIcon()
@@ -692,12 +735,13 @@ public class CatalogueModListScreen extends Screen
         {
             String name = this.info.getName();
             int width = this.list.getRowWidth() - (this.list.getMaxScroll() > 0 ? 30 : 24);
+            width -= this.info.getParentMod().isEmpty() ? 0 : 10;
             if(CatalogueModListScreen.this.font.width(name) > width)
             {
                 name = CatalogueModListScreen.this.font.plainSubstrByWidth(name, width - 10) + "...";
             }
             MutableComponent title = Component.literal(name);
-            if(this.info.getId().startsWith("fabric-") || this.info.getId().equals("minecraft") || this.info.getId().equals("java"))
+            if(this.info.isLibrary())
             {
                 title.withStyle(ChatFormatting.DARK_GRAY);
             }
@@ -707,14 +751,34 @@ public class CatalogueModListScreen extends Screen
         @Override
         public boolean mouseClicked(double mouseX, double mouseY, int button)
         {
+            double f = mouseX - (double)this.list.getRowLeft();
+            double g = mouseY - (double)this.list.getRowTop(this.list.children().indexOf(this));
             CatalogueModListScreen.this.setSelectedModInfo(this.info);
             this.list.setSelected(this);
+            if (g < 24 && f < 24 && !this.children.isEmpty()) {
+                this.isExpanded = !this.isExpanded;
+                this.list.filterAndUpdateList(CatalogueModListScreen.this.searchTextField.getValue());
+            }
             return false;
         }
 
         public ModInfo getInfo()
         {
             return this.info;
+        }
+
+        public void grabParentMod(List<ModEntry> entries) {
+            if (this.info.getParentMod().isEmpty()) return;
+            Optional<ModEntry> parent = entries.stream().filter(p -> this.info.getParentModId().equals(p.info.getId())).findFirst();
+            parent.ifPresent(entry -> this.parent = entry);
+        }
+
+        public void grabChildrenMods(List<ModEntry> entries) {
+            this.children = entries.stream().filter(p -> this.info.getId().equals(p.info.getParentModId())).collect(Collectors.toList());
+        }
+
+        public boolean matches(String text) {
+            return info.getName().toLowerCase(Locale.ENGLISH).contains(text.toLowerCase(Locale.ENGLISH)) || this.children.stream().anyMatch(child -> child.info.getName().toLowerCase(Locale.ENGLISH).contains(text.toLowerCase(Locale.ENGLISH)));
         }
     }
 
@@ -814,7 +878,7 @@ public class CatalogueModListScreen extends Screen
     public static class ModInfo
     {
         private final ModContainer container;
-        @Nullable private final ModContainer parent;
+        private final ModContainer parentMod; // DO NOT TAKE THIS DIRECTLY
         private final String id;
         private final String name;
         private final String description;
@@ -845,6 +909,7 @@ public class CatalogueModListScreen extends Screen
             String imageIcon = metadata.getIconPath(64).orElse(null);
             String itemIcon = null;
             Method configFactory = null;
+            ModContainer parentMod = null;
             CustomValue value = metadata.getCustomValue("catalogue");
             if(value != null && value.getType() == CustomValue.CvType.OBJECT)
             {
@@ -866,10 +931,14 @@ public class CatalogueModListScreen extends Screen
                 }
 
                 CustomValue parentModValue = catalogueObj.get("parentMod");
+                if (parentModValue != null && configFactoryValue.getType() == CustomValue.CvType.STRING) {
+                    parentMod = FabricLoader.getInstance().getModContainer(parentModValue.getAsString()).get();
+                }
             }
             this.imageIcon = imageIcon;
             this.itemIcon = itemIcon;
             this.configFactory = configFactory;
+            this.parentMod = parentMod;
         }
 
         public String getId()
@@ -930,6 +999,25 @@ public class CatalogueModListScreen extends Screen
         public Optional<Method> getConfigFactory()
         {
             return Optional.ofNullable(this.configFactory);
+        }
+
+        public Optional<ModContainer> getParentMod()
+        {
+            if (this.getId().startsWith("fabric") && !this.getId().equals("fabric-api")) {
+                return FabricLoader.getInstance().getModContainer("fabric-api");
+            }
+            return Optional.ofNullable(this.parentMod);
+        }
+
+        public String getParentModId()
+        {
+            Optional<ModContainer> parentMod = this.getParentMod();
+            return parentMod.map(modContainer -> modContainer.getMetadata().getId()).orElse(null);
+        }
+
+        public boolean isLibrary()
+        {
+            return false;
         }
     }
 
