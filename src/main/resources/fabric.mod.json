@@ -18,6 +18,9 @@
   "entrypoints": {
     "main": [
       "com.mrcrayfish.catalogue.Catalogue"
+    ],
+    "client": [
+      "com.mrcrayfish.catalogue.client.ClientHandler"
     ]
   },
   "mixins": [
