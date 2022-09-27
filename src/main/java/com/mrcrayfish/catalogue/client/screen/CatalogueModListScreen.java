@@ -74,6 +74,7 @@ public class CatalogueModListScreen extends Screen
     private static final Comparator<ModEntry> SORT = Comparator.comparing(o -> o.getInfo().getName());
     private static final ResourceLocation MISSING_BANNER = new ResourceLocation("catalogue", "textures/gui/missing_banner.png");
     private static final Map<String, Pair<ResourceLocation, Size2i>> ICON_CACHE = new HashMap<>();
+    private static final Map<String, Pair<ResourceLocation, Size2i>> BANNER_CACHE = new HashMap<>();
     private static final Map<String, ItemStack> ITEM_CACHE = new HashMap<>();
     private static List<ModInfo> cachedInfo;
     private static Map<String, BiFunction<Screen, ModContainer, Screen>> providers;
@@ -394,6 +395,7 @@ public class CatalogueModListScreen extends Screen
     private void setSelectedModInfo(ModInfo info)
     {
         this.selectedModInfo = info;
+        this.loadAndCacheBanner(info);
         this.configButton.visible = true;
         this.websiteButton.visible = true;
         this.issueButton.visible = true;
@@ -424,13 +426,19 @@ public class CatalogueModListScreen extends Screen
             ResourceLocation logoResource = MISSING_BANNER;
             Size2i size = new Size2i(600, 120);
 
-            if(ICON_CACHE.containsKey(this.selectedModInfo.getId()))
+            Pair<ResourceLocation, Size2i> bannerInfo = BANNER_CACHE.get(this.selectedModInfo.getId());
+            if(bannerInfo != null && bannerInfo.getLeft() != null)
             {
-                Pair<ResourceLocation, Size2i> logoInfo = ICON_CACHE.get(this.selectedModInfo.getId());
-                if(logoInfo.getLeft() != null)
+                logoResource = bannerInfo.getLeft();
+                size = bannerInfo.getRight();
+            }
+            else
+            {
+                Pair<ResourceLocation, Size2i> iconInfo = ICON_CACHE.get(this.selectedModInfo.getId());
+                if(iconInfo != null && iconInfo.getLeft() != null)
                 {
-                    logoResource = logoInfo.getLeft();
-                    size = logoInfo.getRight();
+                    logoResource = iconInfo.getLeft();
+                    size = iconInfo.getRight();
                 }
             }
 
@@ -479,6 +487,26 @@ public class CatalogueModListScreen extends Screen
                     ResourceLocation location = textureManager.register("catalogueicon", this.createLogoTexture(icon, false));
                     ICON_CACHE.put(info.getId(), Pair.of(location, new Size2i(icon.getWidth(), icon.getHeight())));
                 }
+            }
+            catch(IOException ignored) {}
+        });
+    }
+
+    private void loadAndCacheBanner(ModInfo info)
+    {
+        if(BANNER_CACHE.containsKey(info.getId()))
+            return;
+
+        // Fills an empty icon as icon may not be present
+        BANNER_CACHE.put(info.getId(), Pair.of(null, new Size2i(0, 0)));
+
+        info.getImageBanner().ifPresent(path ->
+        {
+            try(InputStream is = Files.newInputStream(path); NativeImage icon = NativeImage.read(is))
+            {
+                TextureManager textureManager = this.minecraft.getTextureManager();
+                ResourceLocation location = textureManager.register("cataloguebanner", this.createLogoTexture(icon, false));
+                BANNER_CACHE.put(info.getId(), Pair.of(location, new Size2i(icon.getWidth(), icon.getHeight())));
             }
             catch(IOException ignored) {}
         });
@@ -833,6 +861,7 @@ public class CatalogueModListScreen extends Screen
         private final String description;
         private final String version;
         private final String imageIcon;
+        private final String imageBanner;
         private final String itemIcon;
         private final String license;
         private final String authors;
@@ -852,6 +881,7 @@ public class CatalogueModListScreen extends Screen
             this.description = "";
             this.version = c.getMetadata().getVersion().getFriendlyString();
             this.imageIcon = null;
+            this.imageBanner = null;
             this.itemIcon = null;
             this.license = "All Rights Reserved";
             this.authors = "Mojang AB";
@@ -878,21 +908,32 @@ public class CatalogueModListScreen extends Screen
             this.type = Type.getType(container);
 
             String imageIcon = metadata.getIconPath(64).orElse(null);
+            String imageBanner = null;
             String itemIcon = null;
             Method configFactory = null;
             CustomValue value = metadata.getCustomValue("catalogue");
             if(value != null && value.getType() == CustomValue.CvType.OBJECT)
             {
                 CustomValue.CvObject catalogueObj = value.getAsObject();
-                CustomValue imageIconValue = catalogueObj.get("imageIcon");
-                if(imageIconValue != null && imageIconValue.getType() == CustomValue.CvType.STRING)
+                CustomValue iconValue = catalogueObj.get("icon");
+                if(iconValue != null && iconValue.getType() == CustomValue.CvType.OBJECT)
                 {
-                    imageIcon = imageIconValue.getAsString();
+                    CustomValue.CvObject iconObj = iconValue.getAsObject();
+                    CustomValue imageValue = iconObj.get("image");
+                    if(imageValue != null && imageValue.getType() == CustomValue.CvType.STRING)
+                    {
+                        imageIcon = imageValue.getAsString();
+                    }
+                    CustomValue itemValue = iconObj.get("item");
+                    if(itemValue != null && itemValue.getType() == CustomValue.CvType.STRING)
+                    {
+                        itemIcon = itemValue.getAsString();
+                    }
                 }
-                CustomValue itemIconValue = catalogueObj.get("itemIcon");
-                if(itemIconValue != null && itemIconValue.getType() == CustomValue.CvType.STRING)
+                CustomValue bannerValue = catalogueObj.get("banner");
+                if(bannerValue != null && bannerValue.getType() == CustomValue.CvType.STRING)
                 {
-                    itemIcon = itemIconValue.getAsString();
+                    imageBanner = bannerValue.getAsString();
                 }
                 CustomValue configFactoryValue = catalogueObj.get("configFactory");
                 if(configFactoryValue != null && configFactoryValue.getType() == CustomValue.CvType.STRING)
@@ -902,6 +943,7 @@ public class CatalogueModListScreen extends Screen
             }
             this.imageIcon = imageIcon;
             this.itemIcon = itemIcon;
+            this.imageBanner = imageBanner;
             this.configFactory = configFactory;
         }
 
@@ -928,6 +970,11 @@ public class CatalogueModListScreen extends Screen
         public Optional<Path> getImageIcon()
         {
             return Optional.ofNullable(this.imageIcon).flatMap(this.container::findPath);
+        }
+
+        public Optional<Path> getImageBanner()
+        {
+            return Optional.ofNullable(this.imageBanner).flatMap(this.container::findPath);
         }
 
         public Optional<String> getItemIcon()

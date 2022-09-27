@@ -25,5 +25,10 @@
     "fabric-api": "*",
     "minecraft": "~1.19",
     "java": ">=17"
+  },
+  "custom": {
+    "catalogue": {
+      "banner": "assets/catalogue/banner.png"
+    }
   }
 }
