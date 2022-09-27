@@ -182,6 +182,15 @@ public class CatalogueModListScreen extends Screen
     {
         this.activeTooltip = null;
         this.renderBackground(poseStack);
+
+        if(this.minecraft.level != null)
+        {
+            int originalWidth = this.width;
+            this.width = this.modList.getRight() + 11;
+            this.renderDirtBackground(0);
+            this.width = originalWidth;
+        }
+
         this.drawModList(poseStack, mouseX, mouseY, partialTicks);
         this.drawModInfo(poseStack, mouseX, mouseY, partialTicks);
         super.render(poseStack, mouseX, mouseY, partialTicks);
