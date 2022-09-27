@@ -1,5 +1,6 @@
 package com.mrcrayfish.catalogue.client.screen;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -59,6 +60,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -92,7 +94,11 @@ public class CatalogueModListScreen extends Screen
     public CatalogueModListScreen(Screen parentScreen)
     {
         super(CommonComponents.EMPTY);
-        if(cachedInfo == null) cachedInfo = FabricLoaderImpl.INSTANCE.getAllMods().stream().map(ModInfo::new).toList();
+        if(cachedInfo == null) {
+            cachedInfo = FabricLoaderImpl.INSTANCE.getAllMods().stream().map(ModInfo::new).collect(Collectors.toList());
+            cachedInfo.removeIf(info -> info.getId().equals("minecraft"));
+            cachedInfo.add(ModInfo.MINECRAFT);
+        }
         if(providers == null) providers = findConfigFactoryProviders();
         this.parentScreen = parentScreen;
         ICON_CACHE.clear();
@@ -536,7 +542,7 @@ public class CatalogueModListScreen extends Screen
         {
             List<ModEntry> entries = cachedInfo.stream()
                 .filter(info -> info.getName().toLowerCase(Locale.ENGLISH).contains(text.toLowerCase(Locale.ENGLISH)))
-                .filter(info -> !info.getId().startsWith("fabric") && !info.getId().startsWith("java") || libraryButton.selected())
+                .filter(info -> info.getType() == ModInfo.Type.MOD || info.getId().equals("minecraft") || info.getId().equals("fabric-api") || libraryButton.selected())
                 .map(info -> new ModEntry(info, this))
                 .sorted(SORT)
                 .collect(Collectors.toList());
@@ -697,10 +703,7 @@ public class CatalogueModListScreen extends Screen
                 name = CatalogueModListScreen.this.font.plainSubstrByWidth(name, width - 10) + "...";
             }
             MutableComponent title = Component.literal(name);
-            if(this.info.getId().startsWith("fabric-") || this.info.getId().equals("minecraft") || this.info.getId().equals("java"))
-            {
-                title.withStyle(ChatFormatting.DARK_GRAY);
-            }
+            title.withStyle(this.info.getType().getStyle());
             return title;
         }
 
@@ -813,6 +816,8 @@ public class CatalogueModListScreen extends Screen
 
     public static class ModInfo
     {
+        private static final ModInfo MINECRAFT = new ModInfo();
+
         private final ModContainer container;
         private final String id;
         private final String name;
@@ -826,6 +831,27 @@ public class CatalogueModListScreen extends Screen
         private final String issueLink;
         private final String homepageLink;
         private final Method configFactory;
+        private final Type type;
+
+        private ModInfo()
+        {
+            ModContainer c = FabricLoader.getInstance().getModContainer("minecraft").orElse(null);
+            Objects.requireNonNull(c);
+            this.container = c;
+            this.id = "minecraft";
+            this.name = "Minecraft";
+            this.description = "";
+            this.version = c.getMetadata().getVersion().getFriendlyString();
+            this.imageIcon = null;
+            this.itemIcon = null;
+            this.license = "All Rights Reserved";
+            this.authors = "Mojang AB";
+            this.contributors = "";
+            this.issueLink = null;
+            this.homepageLink = "https://minecraft.net/";
+            this.configFactory = null;
+            this.type = Type.LIBRARY;
+        }
 
         public ModInfo(ModContainer container)
         {
@@ -840,6 +866,7 @@ public class CatalogueModListScreen extends Screen
             this.contributors = StringUtils.join(metadata.getContributors().stream().map(Person::getName).collect(Collectors.toList()), ", ");
             this.issueLink = metadata.getContact().get("issues").orElse(null);
             this.homepageLink = metadata.getContact().get("homepage").orElse(null);
+            this.type = Type.getType(container);
 
             String imageIcon = metadata.getIconPath(64).orElse(null);
             String itemIcon = null;
@@ -927,6 +954,53 @@ public class CatalogueModListScreen extends Screen
         public Optional<Method> getConfigFactory()
         {
             return Optional.ofNullable(this.configFactory);
+        }
+
+        public Type getType()
+        {
+            return this.type;
+        }
+
+        enum Type
+        {
+            MOD(ChatFormatting.RESET),
+            LIBRARY(ChatFormatting.DARK_GRAY),
+            GENERATED(ChatFormatting.AQUA);
+
+            private final ChatFormatting style;
+
+            Type(ChatFormatting style)
+            {
+                this.style = style;
+            }
+
+            public ChatFormatting getStyle()
+            {
+                return this.style;
+            }
+
+            static Type getType(ModContainer container)
+            {
+                CustomValue lifecycle = container.getMetadata().getCustomValue("fabric-api:module-lifecycle");
+                if(lifecycle != null)
+                {
+                    return LIBRARY;
+                }
+
+                String modId = container.getMetadata().getId();
+                if(modId.startsWith("fabric-") || modId.equals("minecraft") || modId.equals("java") || modId.equals("fabricloader"))
+                {
+                    return LIBRARY;
+                }
+
+                CustomValue generated = container.getMetadata().getCustomValue("fabric-loom:generated");
+                if(generated != null && generated.getType() == CustomValue.CvType.BOOLEAN && generated.getAsBoolean())
+                {
+                    return GENERATED;
+                }
+
+                return MOD;
+            }
         }
     }
 
