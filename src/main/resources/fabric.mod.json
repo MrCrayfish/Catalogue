@@ -16,20 +16,14 @@
   "icon": "assets/catalogue/icon.png",
   "environment": "client",
   "entrypoints": {
-    "main": [
-      "com.mrcrayfish.catalogue.Catalogue"
+    "client": [
+      "com.mrcrayfish.catalogue.client.ClientHandler"
     ]
   },
-  "mixins": [
-    "catalogue.mixins.json"
-  ],
   "depends": {
     "fabricloader": ">=0.14.9",
     "fabric-api": "*",
     "minecraft": "~1.19",
     "java": ">=17"
-  },
-  "suggests": {
-    "another-mod": "*"
   }
 }
