@@ -28,7 +28,8 @@
   },
   "custom": {
     "catalogue": {
-      "banner": "assets/catalogue/banner.png"
+      "banner": "assets/catalogue/icon.png",
+      "background": "assets/catalogue/background.png"
     }
   }
 }

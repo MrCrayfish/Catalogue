@@ -4,9 +4,15 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.math.Matrix4f;
 import com.mrcrayfish.catalogue.client.ScreenUtil;
 import com.mrcrayfish.catalogue.client.screen.widget.CatalogueCheckBoxButton;
 import com.mrcrayfish.catalogue.client.screen.widget.CatalogueIconButton;
@@ -78,6 +84,7 @@ public class CatalogueModListScreen extends Screen
     private static final Map<String, ItemStack> ITEM_CACHE = new HashMap<>();
     private static List<ModInfo> cachedInfo;
     private static Map<String, BiFunction<Screen, ModContainer, Screen>> providers;
+    private static ResourceLocation cachedBackground;
 
     private final Screen parentScreen;
     private EditBox searchTextField;
@@ -292,6 +299,8 @@ public class CatalogueModListScreen extends Screen
 
         if(this.selectedModInfo != null)
         {
+            this.drawBackground(poseStack, this.width - contentLeft + 10, this.modList.getRight() + 12, 0);
+
             // Draw mod logo
             this.drawLogo(poseStack, contentWidth, contentLeft, 10, this.width - (this.modList.getRight() + 12 + 10) - 10, 50);
 
@@ -396,6 +405,7 @@ public class CatalogueModListScreen extends Screen
     {
         this.selectedModInfo = info;
         this.loadAndCacheBanner(info);
+        this.loadAndCacheBackground(info);
         this.configButton.visible = true;
         this.websiteButton.visible = true;
         this.issueButton.visible = true;
@@ -417,6 +427,29 @@ public class CatalogueModListScreen extends Screen
         if(!info.getContributors().isEmpty()) count++;
         if(!info.getAuthors().isEmpty()) count++;
         return count;
+    }
+
+    private void drawBackground(PoseStack poseStack, int contentWidth, int x, int y)
+    {
+        if(this.selectedModInfo == null)
+            return;
+
+        if(cachedBackground == null)
+            return;
+
+        RenderSystem.setShader(GameRenderer::getPositionColorTexShader);
+        RenderSystem.setShaderTexture(0, cachedBackground);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.enableBlend();
+        Matrix4f matrix = poseStack.last().pose();
+        BufferBuilder builder = Tesselator.getInstance().getBuilder();
+        builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX);
+        builder.vertex(matrix, x, y, this.getBlitOffset()).color(1.0F, 1.0F, 1.0F, 1.0F).uv(0, 0).endVertex();
+        builder.vertex(matrix, x, y + 128, this.getBlitOffset()).color(0.0F, 0.0F, 0.0F, 0.0F).uv(0, 1).endVertex();
+        builder.vertex(matrix, x + contentWidth, y + 128, this.getBlitOffset()).color(0.0F, 0.0F, 0.0F, 0.0F).uv(1, 1).endVertex();
+        builder.vertex(matrix, x + contentWidth, y, this.getBlitOffset()).color(1.0F, 1.0F, 1.0F, 1.0F).uv(1, 0).endVertex();
+        BufferUploader.drawWithShader(builder.end());
+        RenderSystem.disableBlend();
     }
 
     private void drawLogo(PoseStack poseStack, int contentWidth, int x, int y, int maxWidth, int maxHeight)
@@ -507,6 +540,30 @@ public class CatalogueModListScreen extends Screen
                 TextureManager textureManager = this.minecraft.getTextureManager();
                 ResourceLocation location = textureManager.register("cataloguebanner", this.createLogoTexture(icon, false));
                 BANNER_CACHE.put(info.getId(), Pair.of(location, new Size2i(icon.getWidth(), icon.getHeight())));
+            }
+            catch(IOException ignored) {}
+        });
+    }
+
+    private void loadAndCacheBackground(ModInfo info)
+    {
+        // Deletes the last cached background since they are large images
+        if(cachedBackground != null)
+        {
+            TextureManager textureManager = this.minecraft.getTextureManager();
+            textureManager.release(cachedBackground);
+        }
+        cachedBackground = null;
+
+        info.getImageBackground().ifPresent(path ->
+        {
+            try(InputStream is = Files.newInputStream(path); NativeImage icon = NativeImage.read(is))
+            {
+                if(icon.getWidth() != 512 || icon.getHeight() != 256)
+                    return;
+                TextureManager textureManager = this.minecraft.getTextureManager();
+                ResourceLocation location = textureManager.register("cataloguebackground", this.createLogoTexture(icon, false));
+                cachedBackground = location;
             }
             catch(IOException ignored) {}
         });
@@ -862,6 +919,7 @@ public class CatalogueModListScreen extends Screen
         private final String version;
         private final String imageIcon;
         private final String imageBanner;
+        private final String imageBackground;
         private final String itemIcon;
         private final String license;
         private final String authors;
@@ -882,6 +940,7 @@ public class CatalogueModListScreen extends Screen
             this.version = c.getMetadata().getVersion().getFriendlyString();
             this.imageIcon = null;
             this.imageBanner = null;
+            this.imageBackground = null;
             this.itemIcon = null;
             this.license = "All Rights Reserved";
             this.authors = "Mojang AB";
@@ -909,6 +968,7 @@ public class CatalogueModListScreen extends Screen
 
             String imageIcon = metadata.getIconPath(64).orElse(null);
             String imageBanner = null;
+            String imageBackground = null;
             String itemIcon = null;
             Method configFactory = null;
             CustomValue value = metadata.getCustomValue("catalogue");
@@ -935,6 +995,11 @@ public class CatalogueModListScreen extends Screen
                 {
                     imageBanner = bannerValue.getAsString();
                 }
+                CustomValue backgroundValue = catalogueObj.get("background");
+                if(backgroundValue != null && backgroundValue.getType() == CustomValue.CvType.STRING)
+                {
+                    imageBackground = backgroundValue.getAsString();
+                }
                 CustomValue configFactoryValue = catalogueObj.get("configFactory");
                 if(configFactoryValue != null && configFactoryValue.getType() == CustomValue.CvType.STRING)
                 {
@@ -944,6 +1009,7 @@ public class CatalogueModListScreen extends Screen
             this.imageIcon = imageIcon;
             this.itemIcon = itemIcon;
             this.imageBanner = imageBanner;
+            this.imageBackground = imageBackground;
             this.configFactory = configFactory;
         }
 
@@ -975,6 +1041,11 @@ public class CatalogueModListScreen extends Screen
         public Optional<Path> getImageBanner()
         {
             return Optional.ofNullable(this.imageBanner).flatMap(this.container::findPath);
+        }
+
+        public Optional<Path> getImageBackground()
+        {
+            return Optional.ofNullable(this.imageBackground).flatMap(this.container::findPath);
         }
 
         public Optional<String> getItemIcon()
