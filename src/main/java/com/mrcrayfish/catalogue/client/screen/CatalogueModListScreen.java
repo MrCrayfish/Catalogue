@@ -2,9 +2,15 @@ package com.mrcrayfish.catalogue.client.screen;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.math.Matrix4f;
 import com.mrcrayfish.catalogue.Catalogue;
 import com.mrcrayfish.catalogue.client.ScreenUtil;
 import com.mrcrayfish.catalogue.client.screen.widget.CatalogueCheckBoxButton;
@@ -78,6 +84,7 @@ public class CatalogueModListScreen extends Screen
     private static final Map<String, Pair<ResourceLocation, Size2i>> LOGO_CACHE = new HashMap<>();
     private static final Map<String, Pair<ResourceLocation, Size2i>> ICON_CACHE = new HashMap<>();
     private static final Map<String, ItemStack> ITEM_CACHE = new HashMap<>();
+    private static ResourceLocation cachedBackground;
 
     private EditBox searchTextField;
     private ModList modList;
@@ -302,6 +309,8 @@ public class CatalogueModListScreen extends Screen
 
         if(this.selectedModInfo != null)
         {
+            this.drawBackground(poseStack, this.width - contentLeft + 10, this.modList.getRight() + 12, 0);
+
             // Draw mod logo
             this.drawLogo(poseStack, contentWidth, contentLeft, 10, this.width - (this.modList.getRight() + 12 + 10) - 10, 50);
 
@@ -452,6 +461,7 @@ public class CatalogueModListScreen extends Screen
     {
         this.selectedModInfo = selectedModInfo;
         this.loadAndCacheLogo(selectedModInfo);
+        this.loadAndCacheBackground(selectedModInfo);
         this.configButton.visible = true;
         this.websiteButton.visible = true;
         this.issueButton.visible = true;
@@ -473,6 +483,29 @@ public class CatalogueModListScreen extends Screen
         if(((ModInfo) selectedModInfo).getConfigElement("credits").isPresent()) count++;
         if(((ModInfo) selectedModInfo).getConfigElement("authors").isPresent()) count++;
         return count;
+    }
+
+    private void drawBackground(PoseStack poseStack, int contentWidth, int x, int y)
+    {
+        if(this.selectedModInfo == null)
+            return;
+
+        if(cachedBackground == null)
+            return;
+
+        RenderSystem.setShader(GameRenderer::getPositionColorTexShader);
+        RenderSystem.setShaderTexture(0, cachedBackground);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.enableBlend();
+        Matrix4f matrix = poseStack.last().pose();
+        BufferBuilder builder = Tesselator.getInstance().getBuilder();
+        builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX);
+        builder.vertex(matrix, x, y, this.getBlitOffset()).color(1.0F, 1.0F, 1.0F, 1.0F).uv(0, 0).endVertex();
+        builder.vertex(matrix, x, y + 128, this.getBlitOffset()).color(0.0F, 0.0F, 0.0F, 0.0F).uv(0, 1).endVertex();
+        builder.vertex(matrix, x + contentWidth, y + 128, this.getBlitOffset()).color(0.0F, 0.0F, 0.0F, 0.0F).uv(1, 1).endVertex();
+        builder.vertex(matrix, x + contentWidth, y, this.getBlitOffset()).color(1.0F, 1.0F, 1.0F, 1.0F).uv(1, 0).endVertex();
+        BufferUploader.drawWithShader(builder.end());
+        RenderSystem.disableBlend();
     }
 
     private void drawLogo(PoseStack poseStack, int contentWidth, int x, int y, int maxWidth, int maxHeight)
@@ -635,6 +668,41 @@ public class CatalogueModListScreen extends Screen
                 catch(IOException ignored) {}
             }
         });
+    }
+
+    private void loadAndCacheBackground(IModInfo info)
+    {
+        // Deletes the last cached background since they are large images
+        if(cachedBackground != null)
+        {
+            TextureManager textureManager = this.minecraft.getTextureManager();
+            textureManager.release(cachedBackground);
+        }
+        cachedBackground = null;
+
+        if(info.getModProperties().containsKey("catalogueBackground"))
+        {
+            String s = (String) info.getModProperties().get("catalogueBackground");
+
+            if(s.isEmpty())
+                return;
+
+            if(s.contains("/") || s.contains("\\"))
+            {
+                Catalogue.LOGGER.warn("Skipped loading Catalogue background file from {}. The file name '{}' contained illegal characters '/' or '\\'", info.getDisplayName(), s);
+                return;
+            }
+
+            PathPackResources resourcePack = ResourcePackLoader.getPackFor(info.getModId()).orElse(ResourcePackLoader.getPackFor("forge").orElseThrow(() -> new RuntimeException("Can't find forge, WHAT!")));
+            try(InputStream is = resourcePack.getRootResource(s); NativeImage image = NativeImage.read(is))
+            {
+                if(image.getWidth() != 512 || image.getHeight() != 256)
+                    return;
+                TextureManager textureManager = this.minecraft.getTextureManager();
+                cachedBackground = textureManager.register("cataloguebackground", this.createLogoTexture(image, false));
+            }
+            catch(IOException ignored) {}
+        }
     }
 
     private DynamicTexture createLogoTexture(NativeImage image, boolean smooth)
