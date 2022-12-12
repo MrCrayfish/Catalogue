@@ -8,7 +8,7 @@ modId="catalogue"
 version="1.6.3"
 displayName="Catalogue"
 authors="MrCrayfish"
-logoFile="catalogue.png"
+logoFile="catalogue_icon.png"
 logoBlur=false
 displayURL="https://www.curseforge.com/minecraft/mc-mods/catalogue"
 updateJSONURL="https://mrcrayfish.com/modupdatejson?id=catalogue"
@@ -29,4 +29,5 @@ credits="Hatsondogs for creating icons"
     side="BOTH"
 
 [modproperties.catalogue]
-    catalogueImageIcon="catalogue.png"
+    catalogueImageIcon="catalogue_icon.png"
+    catalogueBackground="catalogue_background.png"
