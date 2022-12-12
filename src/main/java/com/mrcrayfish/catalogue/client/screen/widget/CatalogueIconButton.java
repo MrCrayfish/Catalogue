@@ -28,7 +28,7 @@ public class CatalogueIconButton extends Button
 
     public CatalogueIconButton(int x, int y, int u, int v, int width, Component label, OnPress onPress)
     {
-        super(x, y, width, 20, CommonComponents.EMPTY, onPress);
+        super(x, y, width, 20, CommonComponents.EMPTY, onPress, Button.DEFAULT_NARRATION);
         this.label = label;
         this.u = u;
         this.v = v;
@@ -47,8 +47,8 @@ public class CatalogueIconButton extends Button
         RenderSystem.defaultBlendFunc();
         RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
         int contentWidth = 10 + minecraft.font.width(this.label) + (!this.label.getString().isEmpty() ? 4 : 0);
-        int iconX = this.x + (this.width - contentWidth) / 2;
-        int iconY = this.y + 5;
+        int iconX = this.getX() + (this.width - contentWidth) / 2;
+        int iconY = this.getY() + 5;
         float brightness = this.active ? 1.0F : 0.5F;
         RenderSystem.setShaderColor(brightness, brightness, brightness, this.alpha);
         blit(poseStack, iconX, iconY, this.u, this.v, 10, 10, 64, 64);

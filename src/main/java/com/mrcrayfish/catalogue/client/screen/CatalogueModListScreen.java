@@ -27,12 +27,14 @@ import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.commands.arguments.item.ItemParser;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.IoSupplier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
@@ -109,9 +111,9 @@ public class CatalogueModListScreen extends Screen
         this.modList.setLeftPos(10);
         this.modList.setRenderTopAndBottom(false);
         this.addWidget(this.modList);
-        this.addRenderableWidget(new Button(10, this.modList.getBottom() + 8, 127, 20, CommonComponents.GUI_BACK, onPress -> {
+        this.addRenderableWidget(Button.builder(CommonComponents.GUI_BACK, btn -> {
             this.getMinecraft().setScreen(null);
-        }));
+        }).pos(10, this.modList.getBottom() + 8).size(127, 20).build());
         this.modFolderButton = this.addRenderableWidget(new CatalogueIconButton(140, this.modList.getBottom() + 8, 0, 0, onPress -> {
             Util.getPlatform().openFile(FMLPaths.MODSDIR.get().toFile());
         }));
@@ -539,12 +541,16 @@ public class CatalogueModListScreen extends Screen
             }
 
             PathPackResources resourcePack = ResourcePackLoader.getPackFor(info.getModId()).orElse(ResourcePackLoader.getPackFor("forge").orElseThrow(() -> new RuntimeException("Can't find forge, WHAT!")));
-            try(InputStream is = resourcePack.getRootResource(s); NativeImage logo = NativeImage.read(is))
+            IoSupplier<InputStream> supplier = resourcePack.getRootResource(s);
+            if(supplier != null)
             {
-                TextureManager textureManager = this.getMinecraft().getTextureManager();
-                LOGO_CACHE.put(info.getModId(), Pair.of(textureManager.register("modlogo", this.createLogoTexture(logo, modInfo.getLogoBlur())), new Size2i(logo.getWidth(), logo.getHeight())));
+                try(InputStream is = supplier.get(); NativeImage logo = NativeImage.read(is))
+                {
+                    TextureManager textureManager = this.getMinecraft().getTextureManager();
+                    LOGO_CACHE.put(info.getModId(), Pair.of(textureManager.register("modlogo", this.createLogoTexture(logo, modInfo.getLogoBlur())), new Size2i(logo.getWidth(), logo.getHeight())));
+                }
+                catch(IOException ignored) {}
             }
-            catch(IOException ignored) {}
         });
     }
 
@@ -562,8 +568,7 @@ public class CatalogueModListScreen extends Screen
         {
             String s = (String) modInfo.getModProperties().get("catalogueImageIcon");
 
-            if(s.isEmpty())
-                return;
+            if(s.isEmpty()) return;
 
             if(s.contains("/") || s.contains("\\"))
             {
@@ -572,13 +577,17 @@ public class CatalogueModListScreen extends Screen
             }
 
             PathPackResources resourcePack = ResourcePackLoader.getPackFor(info.getModId()).orElse(ResourcePackLoader.getPackFor("forge").orElseThrow(() -> new RuntimeException("Can't find forge, WHAT!")));
-            try(InputStream is = resourcePack.getRootResource(s); NativeImage icon = NativeImage.read(is))
+            IoSupplier<InputStream> supplier = resourcePack.getRootResource(s);
+            if(supplier != null)
             {
-                TextureManager textureManager = this.getMinecraft().getTextureManager();
-                ICON_CACHE.put(info.getModId(), Pair.of(textureManager.register("catalogueicon", this.createLogoTexture(icon, false)), new Size2i(icon.getWidth(), icon.getHeight())));
-                return;
+                try(InputStream is = supplier.get(); NativeImage icon = NativeImage.read(is))
+                {
+                    TextureManager textureManager = this.getMinecraft().getTextureManager();
+                    ICON_CACHE.put(info.getModId(), Pair.of(textureManager.register("catalogueicon", this.createLogoTexture(icon, false)), new Size2i(icon.getWidth(), icon.getHeight())));
+                    return;
+                }
+                catch(IOException ignored){}
             }
-            catch(IOException ignored) {}
         }
 
         // Attempts to use the logo file if it's a square
@@ -594,33 +603,37 @@ public class CatalogueModListScreen extends Screen
             }
 
             PathPackResources resourcePack = ResourcePackLoader.getPackFor(info.getModId()).orElse(ResourcePackLoader.getPackFor("forge").orElseThrow(() -> new RuntimeException("Can't find forge, WHAT!")));
-            try(InputStream is = resourcePack.getRootResource(s); NativeImage logo = NativeImage.read(is))
+            IoSupplier<InputStream> supplier = resourcePack.getRootResource(s);
+            if(supplier != null)
             {
-                if(logo.getWidth() == logo.getHeight())
+                try(InputStream is = supplier.get(); NativeImage logo = NativeImage.read(is))
                 {
-                    TextureManager textureManager = this.getMinecraft().getTextureManager();
-                    String modId = info.getModId();
-
-                    /* The first selected mod will have it's logo cached before the icon, so we
-                     * can just use the logo instead of loading the image again. */
-                    if(LOGO_CACHE.containsKey(modId))
+                    if(logo.getWidth() == logo.getHeight())
                     {
-                        if(LOGO_CACHE.get(modId).getLeft() != null)
-                        {
-                            ICON_CACHE.put(modId, LOGO_CACHE.get(modId));
-                            return;
-                        }
-                    }
+                        TextureManager textureManager = this.getMinecraft().getTextureManager();
+                        String modId = info.getModId();
 
-                    /* Since the icon will be same as the logo, we can cache into both icon and logo cache */
-                    DynamicTexture texture = this.createLogoTexture(logo, modInfo.getLogoBlur());
-                    Size2i size = new Size2i(logo.getWidth(), logo.getHeight());
-                    ResourceLocation textureId = textureManager.register("catalogueicon", texture);
-                    ICON_CACHE.put(modId, Pair.of(textureId, size));
-                    LOGO_CACHE.put(modId, Pair.of(textureId, size));
+                        /* The first selected mod will have it's logo cached before the icon, so we
+                         * can just use the logo instead of loading the image again. */
+                        if(LOGO_CACHE.containsKey(modId))
+                        {
+                            if(LOGO_CACHE.get(modId).getLeft() != null)
+                            {
+                                ICON_CACHE.put(modId, LOGO_CACHE.get(modId));
+                                return;
+                            }
+                        }
+
+                        /* Since the icon will be same as the logo, we can cache into both icon and logo cache */
+                        DynamicTexture texture = this.createLogoTexture(logo, modInfo.getLogoBlur());
+                        Size2i size = new Size2i(logo.getWidth(), logo.getHeight());
+                        ResourceLocation textureId = textureManager.register("catalogueicon", texture);
+                        ICON_CACHE.put(modId, Pair.of(textureId, size));
+                        LOGO_CACHE.put(modId, Pair.of(textureId, size));
+                    }
                 }
+                catch(IOException ignored) {}
             }
-            catch(IOException ignored) {}
         });
     }
 
@@ -811,7 +824,7 @@ public class CatalogueModListScreen extends Screen
             {
                 try
                 {
-                    ItemParser.ItemResult result = ItemParser.parseForItem(HolderLookup.forRegistry(Registry.ITEM), new StringReader(itemIcon));
+                    ItemParser.ItemResult result = ItemParser.parseForItem(BuiltInRegistries.ITEM.asLookup(), new StringReader(itemIcon));
                     ItemStack item = new ItemStack(result.item().get(), 1, result.nbt());
                     ITEM_CACHE.put(this.info.getModId(), item);
                     return item;

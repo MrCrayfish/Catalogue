@@ -18,13 +18,13 @@ credits="Hatsondogs for creating icons"
 [[dependencies.catalogue]]
     modId="forge"
     mandatory=true
-    versionRange="[41.0.94,)"
+    versionRange="[44,)"
     ordering="NONE"
     side="BOTH"
 [[dependencies.catalogue]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.19,1.20)"
+    versionRange="[1.19.3,1.20)"
     ordering="NONE"
     side="BOTH"
 
