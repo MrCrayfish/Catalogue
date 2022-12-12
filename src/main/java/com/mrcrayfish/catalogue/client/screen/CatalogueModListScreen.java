@@ -10,7 +10,6 @@ import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.math.Matrix4f;
 import com.mrcrayfish.catalogue.Catalogue;
 import com.mrcrayfish.catalogue.client.ScreenUtil;
 import com.mrcrayfish.catalogue.client.screen.widget.CatalogueCheckBoxButton;
@@ -31,8 +30,6 @@ import net.minecraft.client.resources.language.I18n;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.commands.arguments.item.ItemParser;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.CommonComponents;
@@ -60,6 +57,7 @@ import net.minecraftforge.resource.PathPackResources;
 import net.minecraftforge.resource.ResourcePackLoader;
 import net.minecraftforge.versions.forge.ForgeVersion;
 import org.apache.commons.lang3.tuple.Pair;
+import org.joml.Matrix4f;
 import org.lwjgl.glfw.GLFW;
 
 import javax.annotation.Nullable;
@@ -694,14 +692,18 @@ public class CatalogueModListScreen extends Screen
             }
 
             PathPackResources resourcePack = ResourcePackLoader.getPackFor(info.getModId()).orElse(ResourcePackLoader.getPackFor("forge").orElseThrow(() -> new RuntimeException("Can't find forge, WHAT!")));
-            try(InputStream is = resourcePack.getRootResource(s); NativeImage image = NativeImage.read(is))
+            IoSupplier<InputStream> supplier = resourcePack.getRootResource(s);
+            if(supplier != null)
             {
-                if(image.getWidth() != 512 || image.getHeight() != 256)
-                    return;
-                TextureManager textureManager = this.minecraft.getTextureManager();
-                cachedBackground = textureManager.register("cataloguebackground", this.createLogoTexture(image, false));
+                try(InputStream is = supplier.get(); NativeImage image = NativeImage.read(is))
+                {
+                    if(image.getWidth() != 512 || image.getHeight() != 256)
+                        return;
+                    TextureManager textureManager = this.minecraft.getTextureManager();
+                    cachedBackground = textureManager.register("cataloguebackground", this.createLogoTexture(image, false));
+                }
+                catch(IOException ignored) {}
             }
-            catch(IOException ignored) {}
         }
     }
 
