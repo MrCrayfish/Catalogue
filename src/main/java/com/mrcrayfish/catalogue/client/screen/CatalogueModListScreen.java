@@ -1,6 +1,5 @@
 package com.mrcrayfish.catalogue.client.screen;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -12,7 +11,6 @@ import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.math.Matrix4f;
 import com.mrcrayfish.catalogue.client.ScreenUtil;
 import com.mrcrayfish.catalogue.client.screen.widget.CatalogueCheckBoxButton;
 import com.mrcrayfish.catalogue.client.screen.widget.CatalogueIconButton;
@@ -37,8 +35,7 @@ import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.commands.arguments.item.ItemParser;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
@@ -52,6 +49,7 @@ import net.minecraft.world.item.Items;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4f;
 import org.lwjgl.glfw.GLFW;
 
 import java.io.IOException;
@@ -127,9 +125,9 @@ public class CatalogueModListScreen extends Screen
         this.modList.setLeftPos(10);
         this.modList.setRenderTopAndBottom(false);
         this.addWidget(this.modList);
-        this.addRenderableWidget(new Button(10, this.modList.getBottom() + 8, 127, 20, CommonComponents.GUI_BACK, onPress -> {
-            this.minecraft.setScreen(this.parentScreen);
-        }));
+        this.addRenderableWidget(Button.builder(CommonComponents.GUI_BACK, btn -> {
+            this.minecraft.setScreen(null);
+        }).pos(10, this.modList.getBottom() + 8).size(127, 20).build());
         this.modFolderButton = this.addRenderableWidget(new CatalogueIconButton(140, this.modList.getBottom() + 8, 0, 0, onPress -> {
             Util.getPlatform().openFile(FabricLoader.getInstance().getGameDir().resolve("mods").toFile());
         }));
@@ -764,7 +762,7 @@ public class CatalogueModListScreen extends Screen
             {
                 try
                 {
-                    ItemParser.ItemResult result = ItemParser.parseForItem(HolderLookup.forRegistry(Registry.ITEM), new StringReader(itemIcon.get()));
+                    ItemParser.ItemResult result = ItemParser.parseForItem(BuiltInRegistries.ITEM.asLookup(), new StringReader(itemIcon.get()));
                     ItemStack item = new ItemStack(result.item().value(), 1);
                     item.setTag(result.nbt());
                     ITEM_CACHE.put(this.info.getId(), item);
@@ -774,7 +772,7 @@ public class CatalogueModListScreen extends Screen
             }
 
             // If the mod doesn't specify an item to use, Catalogue will attempt to get an item from the mod
-            Optional<ItemStack> optional = Registry.ITEM.stream().filter(item -> item.builtInRegistryHolder().key().location().getNamespace().equals(this.info.getId())).map(ItemStack::new).findFirst();
+            Optional<ItemStack> optional = BuiltInRegistries.ITEM.stream().filter(item -> item.builtInRegistryHolder().key().location().getNamespace().equals(this.info.getId())).map(ItemStack::new).findFirst();
             if(optional.isPresent())
             {
                 ItemStack item = optional.get();

@@ -42,7 +42,7 @@ public class CatalogueCheckBoxButton extends Checkbox
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
-        blit(poseStack, this.x, this.y, this.isHoveredOrFocused() ? 14 : 0, this.selected() ? 14 : 0, 14, 14, 64, 64);
+        blit(poseStack, this.getX(), this.getY(), this.isHoveredOrFocused() ? 14 : 0, this.selected() ? 14 : 0, 14, 14, 64, 64);
         this.renderBg(poseStack, minecraft, mouseX, mouseY);
     }
 

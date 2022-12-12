@@ -5,6 +5,8 @@ import com.mrcrayfish.catalogue.client.screen.widget.CatalogueIconButton;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.Screens;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.network.chat.Component;
@@ -23,21 +25,17 @@ public class ClientHandler implements ClientModInitializer
             {
                 int x = screen.width / 2;
                 int y = screen.height / 4 + 48;
-                Screens.getButtons(screen).add(new CatalogueIconButton(x - 124, y + 48, 30, 0, button -> {
-                    client.setScreen(new CatalogueModListScreen(screen));
-                }, (button, poseStack, mouseX, mouseY) -> {
-                    screen.renderTooltip(poseStack, Component.translatable("catalogue.gui.mod_list"), mouseX, mouseY);
-                }));
+                Button modButton = new CatalogueIconButton(x - 124, y + 48, 30, 0, button -> client.setScreen(new CatalogueModListScreen(screen)));
+                modButton.setTooltip(Tooltip.create(Component.translatable("catalogue.gui.mod_list")));
+                Screens.getButtons(screen).add(modButton);
             }
             else if(screen instanceof PauseScreen)
             {
                 int x = screen.width / 2;
                 int y = screen.height / 4 + 32;
-                Screens.getButtons(screen).add(new CatalogueIconButton(x - 124, y + 48, 30, 0, button -> {
-                    client.setScreen(new CatalogueModListScreen(screen));
-                }, (button, poseStack, mouseX, mouseY) -> {
-                    screen.renderTooltip(poseStack, Component.translatable("catalogue.gui.mod_list"), mouseX, mouseY);
-                }));
+                Button modButton = new CatalogueIconButton(x - 124, y + 48, 30, 0, button -> client.setScreen(new CatalogueModListScreen(screen)));
+                modButton.setTooltip(Tooltip.create(Component.translatable("catalogue.gui.mod_list")));
+                Screens.getButtons(screen).add(modButton);
             }
         });
     }
