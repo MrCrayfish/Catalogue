@@ -539,16 +539,16 @@ public class CatalogueModListScreen extends Screen
         BANNER_CACHE.put(data.getModId(), Pair.of(null, new Dimension(0, 0)));
 
         // Attempts to load the real logo
-        String logoFile = data.getBanner();
-        if(logoFile != null && !logoFile.isEmpty())
+        String banner = data.getBanner();
+        if(banner != null && !banner.isEmpty())
         {
-            if(logoFile.contains("/") || logoFile.contains("\\"))
+            if(ClientServices.PLATFORM.isForge() && (banner.contains("/") || banner.contains("\\")))
             {
-                Constants.LOG.warn("Skipped loading logo file from {}. The file name '{}' contained illegal characters '/' or '\\'", data.getDisplayName(), logoFile);
+                Constants.LOG.warn("Skipped loading logo file from {}. The file name '{}' contained illegal characters '/' or '\\'", data.getDisplayName(), banner);
                 return;
             }
 
-            ClientServices.PLATFORM.loadNativeImage(data.getModId(), logoFile, image ->
+            ClientServices.PLATFORM.loadNativeImage(data.getModId(), banner, image ->
             {
                 if(image.getWidth() == image.getHeight())
                 {
@@ -571,7 +571,7 @@ public class CatalogueModListScreen extends Screen
         String imageIcon = data.getImageIcon();
         if(imageIcon != null && !imageIcon.isEmpty())
         {
-            if(imageIcon.contains("/") || imageIcon.contains("\\"))
+            if(ClientServices.PLATFORM.isForge() && (imageIcon.contains("/") || imageIcon.contains("\\")))
             {
                 Constants.LOG.warn("Skipped loading Catalogue icon file from {}. The file name '{}' contained illegal characters '/' or '\\'", data.getDisplayName(), imageIcon);
                 return;
@@ -588,7 +588,7 @@ public class CatalogueModListScreen extends Screen
         String logoFile = data.getBanner();
         if(logoFile != null && !logoFile.isEmpty())
         {
-            if(logoFile.contains("/") || logoFile.contains("\\"))
+            if(ClientServices.PLATFORM.isForge() && (logoFile.contains("/") || logoFile.contains("\\")))
             {
                 Constants.LOG.warn("Skipped loading logo file from {}. The file name '{}' contained illegal characters '/' or '\\'", data.getDisplayName(), imageIcon);
                 return;
@@ -636,7 +636,7 @@ public class CatalogueModListScreen extends Screen
         String background = data.getBackground();
         if(background != null && !background.isEmpty())
         {
-            if(background.contains("/") || background.contains("\\"))
+            if(ClientServices.PLATFORM.isForge() && (background.contains("/") || background.contains("\\")))
             {
                 Constants.LOG.warn("Skipped loading Catalogue background file from {}. The file name '{}' contained illegal characters '/' or '\\'", data.getDisplayName(), background);
                 return;
