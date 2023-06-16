@@ -5,6 +5,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mrcrayfish.catalogue.Constants;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.CommonComponents;
@@ -36,12 +37,10 @@ public class CatalogueIconButton extends Button
     }
 
     @Override
-    public void renderWidget(PoseStack poseStack, int mouseX, int mouseY, float partialTicks)
+    public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks)
     {
-        super.renderWidget(poseStack, mouseX, mouseY, partialTicks);
+        super.renderWidget(graphics, mouseX, mouseY, partialTicks);
         Minecraft minecraft = Minecraft.getInstance();
-        RenderSystem.setShader(GameRenderer::getPositionColorTexShader);
-        RenderSystem.setShaderTexture(0, TEXTURE);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, this.alpha);
         RenderSystem.enableDepthTest();
         RenderSystem.enableBlend();
@@ -52,9 +51,9 @@ public class CatalogueIconButton extends Button
         int iconY = this.getY() + 5;
         float brightness = this.active ? 1.0F : 0.5F;
         RenderSystem.setShaderColor(brightness, brightness, brightness, this.alpha);
-        blit(poseStack, iconX, iconY, this.u, this.v, 10, 10, 64, 64);
+        graphics.blit(TEXTURE, iconX, iconY, this.u, this.v, 10, 10, 64, 64);
         RenderSystem.setShaderColor(brightness, brightness, brightness, this.alpha);
         int textColor = 0xFFFFFF | Mth.ceil(this.alpha * 255.0F) << 24;
-        drawString(poseStack, minecraft.font, this.label, iconX + 14, iconY + 1, textColor);
+        graphics.drawString(minecraft.font, this.label, iconX + 14, iconY + 1, textColor);
     }
 }

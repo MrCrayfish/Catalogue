@@ -19,6 +19,7 @@ import com.mrcrayfish.catalogue.platform.ClientServices;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractSelectionList;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Checkbox;
@@ -179,13 +180,13 @@ public class CatalogueModListScreen extends Screen
     }
 
     @Override
-    public void render(PoseStack poseStack, int mouseX, int mouseY, float partialTicks)
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks)
     {
         this.activeTooltip = null;
-        this.renderBackground(poseStack);
-        this.drawModList(poseStack, mouseX, mouseY, partialTicks);
-        this.drawModInfo(poseStack, mouseX, mouseY, partialTicks);
-        super.render(poseStack, mouseX, mouseY, partialTicks);
+        this.renderBackground(graphics);
+        this.drawModList(graphics, mouseX, mouseY, partialTicks);
+        this.drawModInfo(graphics, mouseX, mouseY, partialTicks);
+        super.render(graphics, mouseX, mouseY, partialTicks);
 
         Optional<IModData> optional = Optional.ofNullable(CACHED_MODS.get(Constants.MOD_ID));
         optional.ifPresent(this::loadAndCacheLogo);
@@ -194,9 +195,8 @@ public class CatalogueModListScreen extends Screen
         {
             ResourceLocation textureId = pair.getLeft();
             Dimension size = pair.getRight();
-            RenderSystem.setShaderTexture(0, textureId);
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-            Screen.blit(poseStack, 10, 9, 10, 10, 0.0F, 0.0F, size.width, size.height, size.width, size.height);
+            graphics.blit(textureId, 10, 9, 10, 10, 0.0F, 0.0F, size.width, size.height, size.width, size.height);
         }
 
         if(ClientHelper.isMouseWithin(10, 9, 10, 10, mouseX, mouseY))
@@ -212,7 +212,7 @@ public class CatalogueModListScreen extends Screen
 
         if(this.activeTooltip != null)
         {
-            this.renderTooltip(poseStack, this.activeTooltip, mouseX, mouseY + this.tooltipYOffset);
+            graphics.renderTooltip(this.font, this.activeTooltip, mouseX, mouseY + this.tooltipYOffset);
             this.tooltipYOffset = 0;
         }
     }
@@ -253,24 +253,22 @@ public class CatalogueModListScreen extends Screen
     /**
      * Draws everything considered left of the screen; title, search bar and mod list.
      *
-     * @param poseStack  the current matrix stack
+     * @param graphics     the current GuiGraphics instance
      * @param mouseX       the current mouse x position
      * @param mouseY       the current mouse y position
      * @param partialTicks the partial ticks
      */
-    private void drawModList(PoseStack poseStack, int mouseX, int mouseY, float partialTicks)
+    private void drawModList(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks)
     {
         if(ClientServices.PLATFORM.isForge())
         {
-            RenderSystem.setShader(GameRenderer::getPositionColorTexShader);
-            RenderSystem.setShaderTexture(0, VERSION_CHECK_ICONS);
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-            blit(poseStack, this.modList.getRight() - 24, 10, 24, 0, 8, 8, 64, 16);
+            graphics.blit(VERSION_CHECK_ICONS, this.modList.getRight() - 24, 10, 24, 0, 8, 8, 64, 16);
         }
 
-        this.modList.render(poseStack, mouseX, mouseY, partialTicks);
-        drawString(poseStack, this.font, ClientServices.COMPONENT.createTitle().withStyle(ChatFormatting.BOLD).withStyle(ChatFormatting.WHITE), 70, 10, 0xFFFFFF);
-        this.searchTextField.render(poseStack, mouseX, mouseY, partialTicks);
+        this.modList.render(graphics, mouseX, mouseY, partialTicks);
+        graphics.drawString(this.font, ClientServices.COMPONENT.createTitle().withStyle(ChatFormatting.BOLD).withStyle(ChatFormatting.WHITE), 70, 10, 0xFFFFFF);
+        this.searchTextField.render(graphics, mouseX, mouseY, partialTicks);
 
         if(ClientHelper.isMouseWithin(this.modList.getRight() - 14, 7, 14, 14, mouseX, mouseY))
         {
@@ -282,42 +280,43 @@ public class CatalogueModListScreen extends Screen
     /**
      * Draws everything considered right of the screen; logo, mod title, description and more.
      *
-     * @param poseStack  the current matrix stack
+     * @param graphics     the current GuiGraphics instance
      * @param mouseX       the current mouse x position
      * @param mouseY       the current mouse y position
      * @param partialTicks the partial ticks
      */
-    private void drawModInfo(PoseStack poseStack, int mouseX, int mouseY, float partialTicks)
+    private void drawModInfo(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks)
     {
         int listRight = this.modList.getRight();
-        this.vLine(poseStack, listRight + 11, -1, this.height, 0xFF707070);
-        fill(poseStack, listRight + 12, 0, this.width, this.height, 0x66000000);
-        this.descriptionList.render(poseStack, mouseX, mouseY, partialTicks);
+        graphics.vLine(listRight + 11, -1, this.height, 0xFF707070);
+        graphics.fill(listRight + 12, 0, this.width, this.height, 0x66000000);
+        this.descriptionList.render(graphics, mouseX, mouseY, partialTicks);
 
         int contentLeft = listRight + 12 + 10;
         int contentWidth = this.width - contentLeft - 10;
 
         if(this.selectedModData != null)
         {
-            this.drawBackground(poseStack, this.width - contentLeft + 10, listRight + 12, 0);
+            this.drawBackground(graphics, this.width - contentLeft + 10, listRight + 12, 0);
 
             // Draw mod logo
-            this.drawBanner(poseStack, contentWidth, contentLeft, 10, this.width - (listRight + 12 + 10) - 10, 50);
+            this.drawBanner(graphics, contentWidth, contentLeft, 10, this.width - (listRight + 12 + 10) - 10, 50);
 
             // Draw mod name
+            PoseStack poseStack = graphics.pose();
             poseStack.pushPose();
             poseStack.translate(contentLeft, 70, 0);
             poseStack.scale(2.0F, 2.0F, 2.0F);
-            drawString(poseStack, this.font, this.selectedModData.getDisplayName(), 0, 0, 0xFFFFFF);
+            graphics.drawString(this.font, this.selectedModData.getDisplayName(), 0, 0, 0xFFFFFF);
             poseStack.popPose();
 
             // Draw version
             Component modId = Component.literal("Mod ID: " + this.selectedModData.getModId()).withStyle(ChatFormatting.DARK_GRAY);
             int modIdWidth = this.font.width(modId);
-            drawString(poseStack, this.font, modId, contentLeft + contentWidth - modIdWidth, 92, 0xFFFFFF);
+            graphics.drawString(this.font, modId, contentLeft + contentWidth - modIdWidth, 92, 0xFFFFFF);
 
             // Draw version
-            this.drawStringWithLabel(poseStack, "catalogue.gui.version", this.selectedModData.getVersion().toString(), contentLeft, 92, contentWidth, mouseX, mouseY, ChatFormatting.GRAY, ChatFormatting.WHITE);
+            this.drawStringWithLabel(graphics, "catalogue.gui.version", this.selectedModData.getVersion().toString(), contentLeft, 92, contentWidth, mouseX, mouseY, ChatFormatting.GRAY, ChatFormatting.WHITE);
 
             // Draws an icon if there is an update for the mod
             IModData.Update update = this.selectedModData.getUpdate();
@@ -325,11 +324,9 @@ public class CatalogueModListScreen extends Screen
             {
                 Component version = ClientServices.COMPONENT.createVersion(this.selectedModData.getVersion());
                 int versionWidth = this.font.width(version);
-                RenderSystem.setShader(GameRenderer::getPositionColorTexShader);
-                RenderSystem.setShaderTexture(0, VERSION_CHECK_ICONS);
                 RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
                 int vOffset = update.animated() && (System.currentTimeMillis() / 800 & 1) == 1 ? 8 : 0;
-                Screen.blit(poseStack, contentLeft + versionWidth + 5, 92, update.texOffset() * 8, vOffset, 8, 8, 64, 16);
+                graphics.blit(VERSION_CHECK_ICONS, contentLeft + versionWidth + 5, 92, update.texOffset() * 8, vOffset, 8, 8, 64, 16);
                 if(ClientHelper.isMouseWithin(contentLeft + versionWidth + 5, 92, 8, 8, mouseX, mouseY))
                 {
                     Component message = ClientServices.COMPONENT.createFormatted("catalogue.gui.update_available", update.url());
@@ -341,14 +338,14 @@ public class CatalogueModListScreen extends Screen
 
             // Draw license
             String license = this.selectedModData.getLicense();
-            this.drawStringWithLabel(poseStack, "catalogue.gui.licenses", license, contentLeft, labelOffset, contentWidth, mouseX, mouseY, ChatFormatting.GRAY, ChatFormatting.WHITE);
+            this.drawStringWithLabel(graphics, "catalogue.gui.licenses", license, contentLeft, labelOffset, contentWidth, mouseX, mouseY, ChatFormatting.GRAY, ChatFormatting.WHITE);
             labelOffset -= 15;
 
             // Draw credits
             String credits = this.selectedModData.getCredits();
             if(credits != null)
             {
-                this.drawStringWithLabel(poseStack, ClientServices.COMPONENT.getCreditsKey(), credits, contentLeft, labelOffset, contentWidth, mouseX, mouseY, ChatFormatting.GRAY, ChatFormatting.WHITE);
+                this.drawStringWithLabel(graphics, ClientServices.COMPONENT.getCreditsKey(), credits, contentLeft, labelOffset, contentWidth, mouseX, mouseY, ChatFormatting.GRAY, ChatFormatting.WHITE);
                 labelOffset -= 15;
             }
 
@@ -356,13 +353,13 @@ public class CatalogueModListScreen extends Screen
             String authors = this.selectedModData.getAuthors();
             if(authors != null)
             {
-                this.drawStringWithLabel(poseStack, "catalogue.gui.authors", authors, contentLeft, labelOffset, contentWidth, mouseX, mouseY, ChatFormatting.GRAY, ChatFormatting.WHITE);
+                this.drawStringWithLabel(graphics, "catalogue.gui.authors", authors, contentLeft, labelOffset, contentWidth, mouseX, mouseY, ChatFormatting.GRAY, ChatFormatting.WHITE);
             }
         }
         else
         {
             Component message = Component.translatable("catalogue.gui.no_selection").withStyle(ChatFormatting.GRAY);
-            drawCenteredString(poseStack, this.font, message, contentLeft + contentWidth / 2, this.height / 2 - 5, 0xFFFFFF);
+            graphics.drawCenteredString(this.font, message, contentLeft + contentWidth / 2, this.height / 2 - 5, 0xFFFFFF);
         }
     }
 
@@ -371,7 +368,7 @@ public class CatalogueModListScreen extends Screen
      * specified max width, it will automatically be trimmed and allows the user to hover the
      * string with their mouse to read the full contents.
      *
-     * @param poseStack the current matrix stack
+     * @param graphics    the current matrix stack
      * @param format      a string to prepend to the content
      * @param text        the string to render
      * @param x           the x position
@@ -380,7 +377,7 @@ public class CatalogueModListScreen extends Screen
      * @param mouseX      the current mouse x position
      * @param mouseY      the current mouse u position
      */
-    private void drawStringWithLabel(PoseStack poseStack, String format, String text, int x, int y, int maxWidth, int mouseX, int mouseY, ChatFormatting labelColor, ChatFormatting contentColor)
+    private void drawStringWithLabel(GuiGraphics graphics, String format, String text, int x, int y, int maxWidth, int mouseX, int mouseY, ChatFormatting labelColor, ChatFormatting contentColor)
     {
         Component formatted = ClientServices.COMPONENT.createFormatted(format, text);
         String rawString = formatted.getString();
@@ -391,7 +388,7 @@ public class CatalogueModListScreen extends Screen
             content = this.font.plainSubstrByWidth(content, maxWidth - this.font.width(label) - 7) + "...";
             MutableComponent credits = Component.literal(label).withStyle(labelColor);
             credits.append(Component.literal(content).withStyle(contentColor));
-            drawString(poseStack, this.font, credits, x, y, 0xFFFFFF);
+            graphics.drawString(this.font, credits, x, y, 0xFFFFFF);
             if(ClientHelper.isMouseWithin(x, y, maxWidth, 9, mouseX, mouseY)) // Sets the active tool tip if string is too long so users can still read it
             {
                 this.setActiveTooltip(Component.literal(text));
@@ -399,7 +396,7 @@ public class CatalogueModListScreen extends Screen
         }
         else
         {
-            drawString(poseStack, this.font, Component.literal(label).withStyle(labelColor).append(Component.literal(content).withStyle(contentColor)), x, y, 0xFFFFFF);
+            graphics.drawString(this.font, Component.literal(label).withStyle(labelColor).append(Component.literal(content).withStyle(contentColor)), x, y, 0xFFFFFF);
         }
     }
 
@@ -463,7 +460,7 @@ public class CatalogueModListScreen extends Screen
         return count;
     }
 
-    private void drawBackground(PoseStack poseStack, int contentWidth, int x, int y)
+    private void drawBackground(GuiGraphics graphics, int contentWidth, int x, int y)
     {
         if(this.selectedModData == null)
             return;
@@ -475,7 +472,7 @@ public class CatalogueModListScreen extends Screen
         RenderSystem.setShaderTexture(0, cachedBackground);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.enableBlend();
-        Matrix4f matrix = poseStack.last().pose();
+        Matrix4f matrix = graphics.pose().last().pose();
         BufferBuilder builder = Tesselator.getInstance().getBuilder();
         builder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX);
         builder.vertex(matrix, x, y, 0).color(1.0F, 1.0F, 1.0F, 1.0F).uv(0, 0).endVertex();
@@ -486,7 +483,7 @@ public class CatalogueModListScreen extends Screen
         RenderSystem.disableBlend();
     }
 
-    private void drawBanner(PoseStack poseStack, int contentWidth, int x, int y, int maxWidth, int maxHeight)
+    private void drawBanner(GuiGraphics graphics, int contentWidth, int x, int y, int maxWidth, int maxHeight)
     {
         if(this.selectedModData != null)
         {
@@ -503,8 +500,6 @@ public class CatalogueModListScreen extends Screen
                 }
             }
 
-            RenderSystem.setShader(GameRenderer::getPositionColorTexShader);
-            RenderSystem.setShaderTexture(0, logoResource);
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
             RenderSystem.enableBlend();
 
@@ -524,7 +519,7 @@ public class CatalogueModListScreen extends Screen
             x += (contentWidth - width) / 2;
             y += (maxHeight - height) / 2;
 
-            Screen.blit(poseStack, x, y, width, height, 0.0F, 0.0F, size.width, size.height, size.width, size.height);
+            graphics.blit(logoResource, x, y, width, height, 0.0F, 0.0F, size.width, size.height, size.width, size.height);
 
             RenderSystem.disableBlend();
         }
@@ -712,10 +707,10 @@ public class CatalogueModListScreen extends Screen
         }
 
         @Override
-        public void render(PoseStack poseStack, int mouseX, int mouseY, float partialTicks)
+        public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks)
         {
             ClientHelper.scissor(this.getRowLeft(), this.getTop(), this.getWidth(), this.getBottom() - this.getTop());
-            super.render(poseStack, mouseX, mouseY, partialTicks);
+            super.render(graphics, mouseX, mouseY, partialTicks);
             RenderSystem.disableScissor();
         }
 
@@ -782,11 +777,11 @@ public class CatalogueModListScreen extends Screen
         }
 
         @Override
-        public void render(PoseStack poseStack, int index, int top, int left, int rowWidth, int rowHeight, int mouseX, int mouseY, boolean hovered, float partialTicks)
+        public void render(GuiGraphics graphics, int index, int top, int left, int rowWidth, int rowHeight, int mouseX, int mouseY, boolean hovered, float partialTicks)
         {
             // Draws mod name and version
-            drawString(poseStack, CatalogueModListScreen.this.font, this.getFormattedModName(), left + 24, top + 2, 0xFFFFFF);
-            drawString(poseStack, CatalogueModListScreen.this.font, Component.literal(this.data.getVersion().toString()).withStyle(ChatFormatting.GRAY), left + 24, top + 12, 0xFFFFFF);
+            graphics.drawString(CatalogueModListScreen.this.font, this.getFormattedModName(), left + 24, top + 2, 0xFFFFFF);
+            graphics.drawString(CatalogueModListScreen.this.font, Component.literal(this.data.getVersion().toString()).withStyle(ChatFormatting.GRAY), left + 24, top + 12, 0xFFFFFF);
 
             CatalogueModListScreen.this.loadAndCacheIcon(this.data);
 
@@ -803,11 +798,9 @@ public class CatalogueModListScreen extends Screen
                     size = logoInfo.getRight();
                 }
 
-                RenderSystem.setShader(GameRenderer::getPositionColorTexShader);
-                RenderSystem.setShaderTexture(0, logoResource);
                 RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
                 RenderSystem.enableBlend();
-                Screen.blit(poseStack, left + 4, top + 2, 16, 16, 0.0F, 0.0F, size.width, size.height, size.width, size.height);
+                graphics.blit(logoResource, left + 4, top + 2, 16, 16, 0.0F, 0.0F, size.width, size.height, size.width, size.height);
                 RenderSystem.disableBlend();
             }
             else
@@ -817,7 +810,7 @@ public class CatalogueModListScreen extends Screen
                 // for null pointers. Switches the icon to a grass block if an exception occurs.
                 try
                 {
-                    CatalogueModListScreen.this.minecraft.getItemRenderer().renderGuiItem(poseStack, this.getItemIcon(), left + 4, top + 2);
+                    graphics.renderItem(this.getItemIcon(), left + 4, top + 2);
                 }
                 catch(Exception e)
                 {
@@ -829,11 +822,9 @@ public class CatalogueModListScreen extends Screen
             IModData.Update update = this.data.getUpdate();
             if(ClientServices.PLATFORM.isForge() && update != null)
             {
-                RenderSystem.setShader(GameRenderer::getPositionColorTexShader);
-                RenderSystem.setShaderTexture(0, VERSION_CHECK_ICONS);
                 RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
                 int vOffset = update.animated() && (System.currentTimeMillis() / 800 & 1) == 1 ? 8 : 0;
-                Screen.blit(poseStack, left + rowWidth - 8 - 10, top + 6, update.texOffset() * 8, vOffset, 8, 8, 64, 16);
+                graphics.blit(VERSION_CHECK_ICONS, left + rowWidth - 8 - 10, top + 6, update.texOffset() * 8, vOffset, 8, 8, 64, 16);
             }
         }
 
@@ -958,10 +949,10 @@ public class CatalogueModListScreen extends Screen
         }
 
         @Override
-        public void render(PoseStack poseStack, int mouseX, int mouseY, float partialTicks)
+        public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks)
         {
             ClientHelper.scissor(this.x0, this.y0, this.width, this.y1 - this.y0);
-            super.render(poseStack, mouseX, mouseY, partialTicks);
+            super.render(graphics, mouseX, mouseY, partialTicks);
             RenderSystem.disableScissor();
         }
 
@@ -979,9 +970,9 @@ public class CatalogueModListScreen extends Screen
         }
 
         @Override
-        public void render(PoseStack poseStack, int index, int top, int left, int rowWidth, int rowHeight, int mouseX, int mouseY, boolean hovered, float partialTicks)
+        public void render(GuiGraphics graphics, int index, int top, int left, int rowWidth, int rowHeight, int mouseX, int mouseY, boolean hovered, float partialTicks)
         {
-            drawString(poseStack, CatalogueModListScreen.this.font, this.line, left, top, 0xFFFFFF);
+            graphics.drawString(CatalogueModListScreen.this.font, this.line, left, top, 0xFFFFFF);
         }
 
         @Override
