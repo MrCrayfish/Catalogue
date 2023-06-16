@@ -6,8 +6,8 @@ project.ext {
 }
 
 subprojects {
-
     apply plugin: 'java'
+    apply plugin: 'signing'
 
     java.toolchain.languageVersion = JavaLanguageVersion.of(17)
     java.withSourcesJar()
