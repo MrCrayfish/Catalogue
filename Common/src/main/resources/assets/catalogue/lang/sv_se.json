@@ -1,0 +1,16 @@
+{
+    "fml.menu.mods.filter_updates": "Visa endast moddar med uppdateringar",
+    "catalogue.gui.internal_libraries": "Visa interna bibliotek",
+    "catalogue.gui.no_selection": "Inga moddar har markerats...",
+    "catalogue.gui.mod_list": "Moddar",
+    "catalogue.gui.search": "Sök",
+    "catalogue.gui.config": "Konfig.",
+    "catalogue.gui.open_mods_folder": "Öppna mappen med moddar",
+    "catalogue.gui.licenses": "Licens(er): %s",
+    "catalogue.gui.authors": "Författare: %s",
+    "catalogue.gui.contributors": "Bidragsgivare: %s",
+    "catalogue.gui.credits": "Erkännande: %s",
+    "catalogue.gui.version": "Version: %s",
+    "catalogue.gui.update_available": "Uppdatering: %s",
+    "catalogue.gui.info": "Denna meny tillhandahålls av Catalogue. Klicka här för att öppna CurseForges sida för denna mod!"
+}
