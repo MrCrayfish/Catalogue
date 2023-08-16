@@ -1,0 +1,16 @@
+{
+    "fml.menu.mods.filter_updates": "Показывать только моды с доступными обновлениями",
+    "catalogue.gui.internal_libraries": "Показывать внутренние библиотеки",
+    "catalogue.gui.no_selection": "Ничего не выбрано...",
+    "catalogue.gui.mod_list": "Моды",
+    "catalogue.gui.search": "Поиск",
+    "catalogue.gui.config": "Настроить",
+    "catalogue.gui.open_mods_folder": "Открыть папку модов",
+    "catalogue.gui.licenses": "Лицензия(-и): %s",
+    "catalogue.gui.authors": "Автор(-ы): %s",
+    "catalogue.gui.contributors": "Участник(-и): %s",
+    "catalogue.gui.credits": "Заслуги: %s",
+    "catalogue.gui.version": "Версия: %s",
+    "catalogue.gui.update_available": "Обновление: %s",
+    "catalogue.gui.info": "Это меню было переработано Catalogue. Нажмите здесь, чтобы открыть страницу на CurseForge!"
+}
