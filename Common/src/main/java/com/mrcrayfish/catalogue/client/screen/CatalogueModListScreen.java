@@ -8,8 +8,6 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.brigadier.StringReader;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mrcrayfish.catalogue.Constants;
 import com.mrcrayfish.catalogue.client.ClientHelper;
 import com.mrcrayfish.catalogue.client.IModData;
@@ -32,7 +30,6 @@ import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
-import net.minecraft.commands.arguments.item.ItemParser;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.CommonComponents;
@@ -42,6 +39,7 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.apache.commons.lang3.tuple.Pair;
@@ -68,7 +66,7 @@ public class CatalogueModListScreen extends Screen
     private static final ResourceLocation VERSION_CHECK_ICONS = new ResourceLocation("forge", "textures/gui/version_check_icons.png");
     private static final Map<String, Pair<ResourceLocation, Dimension>> BANNER_CACHE = new HashMap<>();
     private static final Map<String, Pair<ResourceLocation, Dimension>> IMAGE_ICON_CACHE = new HashMap<>();
-    private static final Map<String, ItemStack> ITEM_ICON_CACHE = new HashMap<>();
+    private static final Map<String, Item> ITEM_ICON_CACHE = new HashMap<>();
     private static final Map<String, IModData> CACHED_MODS = new HashMap<>();
     private static ResourceLocation cachedBackground;
     private static boolean loaded = false;
@@ -771,11 +769,13 @@ public class CatalogueModListScreen extends Screen
     {
         private final IModData data;
         private final ModList list;
+        private final ItemStack icon;
 
         public ModListEntry(IModData data, ModList list)
         {
             this.data = data;
             this.list = list;
+            this.icon = new ItemStack(this.getItemIcon());
         }
 
         @Override
@@ -812,11 +812,11 @@ public class CatalogueModListScreen extends Screen
                 // for null pointers. Switches the icon to a grass block if an exception occurs.
                 try
                 {
-                    graphics.renderItem(this.getItemIcon(), left + 4, top + 2);
+                    graphics.renderItem(this.icon, left + 4, top + 2);
                 }
                 catch(Exception e)
                 {
-                    ITEM_ICON_CACHE.put(this.data.getModId(), new ItemStack(Items.GRASS_BLOCK));
+                    ITEM_ICON_CACHE.put(this.data.getModId(), Items.GRASS_BLOCK);
                 }
             }
 
@@ -830,7 +830,7 @@ public class CatalogueModListScreen extends Screen
             }
         }
 
-        private ItemStack getItemIcon()
+        private Item getItemIcon()
         {
             if(ITEM_ICON_CACHE.containsKey(this.data.getModId()))
             {
@@ -838,12 +838,12 @@ public class CatalogueModListScreen extends Screen
             }
 
             // Put grass as default item icon
-            ITEM_ICON_CACHE.put(this.data.getModId(), new ItemStack(Items.GRASS_BLOCK));
+            ITEM_ICON_CACHE.put(this.data.getModId(), Items.GRASS_BLOCK);
 
             // Special case for Forge to set item icon to anvil
             if(this.data.getModId().equals("forge"))
             {
-                ItemStack item = new ItemStack(Items.ANVIL);
+                Item item = Items.ANVIL;
                 ITEM_ICON_CACHE.put("forge", item);
                 return item;
             }
@@ -851,30 +851,31 @@ public class CatalogueModListScreen extends Screen
             String itemIcon = this.data.getItemIcon();
             if(itemIcon != null && !itemIcon.isEmpty())
             {
-                try
+                ResourceLocation resource = ResourceLocation.tryParse(itemIcon);
+                if(resource != null)
                 {
-                    ItemParser.ItemResult result = ItemParser.parseForItem(BuiltInRegistries.ITEM.asLookup(), new StringReader(itemIcon));
-                    ItemStack item = new ItemStack(result.item().value(), 1);
-                    item.setTag(result.nbt());
-                    ITEM_ICON_CACHE.put(this.data.getModId(), item);
-                    return item;
+                    Item item = BuiltInRegistries.ITEM.get(resource);
+                    if(item != null && item != Items.AIR)
+                    {
+                        ITEM_ICON_CACHE.put(this.data.getModId(), item);
+                        return item;
+                    }
                 }
-                catch (CommandSyntaxException ignored) {}
             }
 
             // If the mod doesn't specify an item to use, Catalogue will attempt to get an item from the mod
-            Optional<ItemStack> optional = BuiltInRegistries.ITEM.stream().filter(item -> item.builtInRegistryHolder().key().location().getNamespace().equals(this.data.getModId())).map(ItemStack::new).findFirst();
+            Optional<Item> optional = BuiltInRegistries.ITEM.stream().filter(item -> item.builtInRegistryHolder().key().location().getNamespace().equals(this.data.getModId())).findFirst();
             if(optional.isPresent())
             {
-                ItemStack item = optional.get();
-                if(item.getItem() != Items.AIR)
+                Item item = optional.get();
+                if(item != Items.AIR)
                 {
                     ITEM_ICON_CACHE.put(this.data.getModId(), item);
                     return item;
                 }
             }
 
-            return new ItemStack(Items.GRASS_BLOCK);
+            return Items.GRASS_BLOCK;
         }
 
         private Component getFormattedModName()
