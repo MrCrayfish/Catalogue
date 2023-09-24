@@ -545,11 +545,13 @@ public class CatalogueModListScreen extends Screen
 
             ClientServices.PLATFORM.loadNativeImage(data.getModId(), banner, image ->
             {
-                if(image.getWidth() == image.getHeight())
+                if(image.getWidth() > 600 || image.getHeight() > 120)
                 {
-                    TextureManager textureManager = this.minecraft.getTextureManager();
-                    BANNER_CACHE.put(data.getModId(), Pair.of(textureManager.register("modlogo", this.createLogoTexture(image, data.isLogoSmooth())), new Dimension(image.getWidth(), image.getHeight())));
+                    Constants.LOG.warn("Failed to load banner image for {} as it exceeds the maximum size of 600x120px", data.getModId());
+                    return;
                 }
+                TextureManager textureManager = this.minecraft.getTextureManager();
+                BANNER_CACHE.put(data.getModId(), Pair.of(textureManager.register("modlogo", this.createLogoTexture(image, data.isLogoSmooth())), new Dimension(image.getWidth(), image.getHeight())));
             });
         }
     }
