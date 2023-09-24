@@ -42,10 +42,6 @@ public class CatalogueIconButton extends Button
         super.renderWidget(graphics, mouseX, mouseY, partialTicks);
         Minecraft minecraft = Minecraft.getInstance();
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, this.alpha);
-        RenderSystem.enableDepthTest();
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
         int contentWidth = 10 + minecraft.font.width(this.label) + (!this.label.getString().isEmpty() ? 4 : 0);
         int iconX = this.getX() + (this.width - contentWidth) / 2;
         int iconY = this.getY() + 5;

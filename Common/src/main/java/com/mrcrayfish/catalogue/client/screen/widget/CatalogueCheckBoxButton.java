@@ -33,13 +33,8 @@ public class CatalogueCheckBoxButton extends Checkbox
     @Override
     public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks)
     {
-        RenderSystem.enableDepthTest();
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, this.alpha);
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
         graphics.blit(TEXTURE, this.getX(), this.getY(), this.isHoveredOrFocused() ? 14 : 0, this.selected() ? 14 : 0, 14, 14, 64, 64);
-        //this.renderBg(poseStack, minecraft, mouseX, mouseY);
     }
 
     public interface OnPress
