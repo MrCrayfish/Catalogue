@@ -709,9 +709,9 @@ public class CatalogueModListScreen extends Screen
         @Override
         public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks)
         {
-            ClientHelper.scissor(this.getRowLeft(), this.getTop(), this.getWidth(), this.getBottom() - this.getTop());
+            graphics.enableScissor(this.getRowLeft(), this.getTop(), this.getRowLeft() + this.getWidth(), this.getBottom());
             super.render(graphics, mouseX, mouseY, partialTicks);
-            RenderSystem.disableScissor();
+            graphics.disableScissor();
         }
 
         @Override
@@ -951,9 +951,9 @@ public class CatalogueModListScreen extends Screen
         @Override
         public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks)
         {
-            ClientHelper.scissor(this.x0, this.y0, this.width, this.y1 - this.y0);
+            graphics.enableScissor(this.x0, this.y0, this.x0 + this.width, this.y1);
             super.render(graphics, mouseX, mouseY, partialTicks);
-            RenderSystem.disableScissor();
+            graphics.disableScissor();
         }
 
         @Override
