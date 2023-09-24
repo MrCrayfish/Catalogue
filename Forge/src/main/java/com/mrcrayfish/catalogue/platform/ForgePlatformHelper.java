@@ -47,15 +47,16 @@ public class ForgePlatformHelper implements IPlatformHelper
     @Override
     public void loadNativeImage(String modId, String resource, Consumer<NativeImage> consumer)
     {
-        PathPackResources resourcePack = ResourcePackLoader.getPackFor(modId).orElse(ResourcePackLoader.getPackFor("forge").orElseThrow(() -> new RuntimeException("Can't find forge, WHAT!")));
-        IoSupplier<InputStream> supplier = resourcePack.getRootResource(resource);
-        if(supplier != null)
-        {
-            try(InputStream is = supplier.get(); NativeImage image = NativeImage.read(is))
+        ResourcePackLoader.getPackFor(modId).ifPresent(resources -> {
+            IoSupplier<InputStream> supplier = resources.getRootResource(resource);
+            if(supplier != null)
             {
-                consumer.accept(image);
+                try(InputStream is = supplier.get(); NativeImage image = NativeImage.read(is))
+                {
+                    consumer.accept(image);
+                }
+                catch(IOException ignored) {}
             }
-            catch(IOException ignored) {}
-        }
+        });
     }
 }
