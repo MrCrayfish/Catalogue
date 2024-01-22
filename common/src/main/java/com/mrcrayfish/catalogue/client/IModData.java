@@ -52,6 +52,8 @@ public interface IModData
 
     boolean isLogoSmooth();
 
+    boolean isInternal();
+
     void openConfigScreen(Screen parent);
 
     record Update(boolean animated, String url, int texOffset) {}

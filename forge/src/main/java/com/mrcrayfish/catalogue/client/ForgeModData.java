@@ -144,6 +144,12 @@ public class ForgeModData implements IModData
     }
 
     @Override
+    public boolean isInternal()
+    {
+        return this.info.getModId().equals("forge") || this.info.getModId().equals("minecraft");
+    }
+
+    @Override
     public void openConfigScreen(Screen parent)
     {
         ConfigScreenHandler.getScreenFactoryFor(this.info).map(f -> f.apply(Minecraft.getInstance(), parent)).ifPresent(newScreen -> Minecraft.getInstance().setScreen(newScreen));

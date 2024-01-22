@@ -895,7 +895,7 @@ public class CatalogueModListScreen extends Screen
                 name = CatalogueModListScreen.this.font.plainSubstrByWidth(name, width - 10) + "...";
             }
             MutableComponent title = Component.literal(name);
-            if(this.data.getModId().equals("forge") || this.data.getModId().equals("minecraft"))
+            if(this.data.isInternal())
             {
                 title.withStyle(ChatFormatting.DARK_GRAY);
             }

@@ -183,6 +183,12 @@ public class FabricModData implements IModData
     }
 
     @Override
+    public boolean isInternal()
+    {
+        return this.type == LIBRARY || this.type == GENERATED;
+    }
+
+    @Override
     public void openConfigScreen(Screen parent)
     {
         BiFunction<Screen, ModContainer, Screen> configFactory = Catalogue.getConfigProviders().get(this.metadata.getId());
