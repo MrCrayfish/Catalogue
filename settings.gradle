@@ -24,4 +24,4 @@ pluginManagement {
 }
 
 rootProject.name = 'Catalogue'
-include("Common", "Fabric", "Forge")
+include("common", "fabric", "forge")
