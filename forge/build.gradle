@@ -8,7 +8,7 @@ plugins {
 }
 
 base {
-    archivesName = "${mod_name}-forge"
+    archivesName = "${mod_id}-forge"
 }
 
 minecraft {
@@ -125,7 +125,8 @@ signing {
     sign publishing.publications.mavenJava
 }
 
-task signJar(type: SignJar, dependsOn: jar) {
+tasks.register('signJar', SignJar) {
+    dependsOn jar
     onlyIf {
         hasProperty('keyStore') || System.getenv("KEYSTORE")
     }

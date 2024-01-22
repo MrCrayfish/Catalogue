@@ -6,7 +6,7 @@ plugins {
 }
 
 base {
-    archivesName = "${mod_name}-fabric"
+    archivesName = "${mod_id}-fabric"
 }
 
 sourceSets {

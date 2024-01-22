@@ -8,7 +8,7 @@ plugins {
 }
 
 base {
-    archivesName = "${mod_name}-neoforge"
+    archivesName = "${mod_id}-neoforge"
 }
 
 if (file('src/main/resources/META-INF/accesstransformer.cfg').exists()) {
