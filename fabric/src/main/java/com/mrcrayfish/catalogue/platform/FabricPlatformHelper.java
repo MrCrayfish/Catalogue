@@ -7,6 +7,7 @@ import com.mojang.blaze3d.platform.NativeImage;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.fabricmc.loader.impl.FabricLoaderImpl;
+import net.minecraft.world.item.Item;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,5 +43,11 @@ public class FabricPlatformHelper implements IPlatformHelper
             }
             catch(IOException ignored) {}
         });
+    }
+
+    @Override
+    public boolean isCustomItemRendering(Item item)
+    {
+        return false;
     }
 }

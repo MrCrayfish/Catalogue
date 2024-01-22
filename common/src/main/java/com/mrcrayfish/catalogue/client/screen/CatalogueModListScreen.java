@@ -769,7 +769,7 @@ public class CatalogueModListScreen extends Screen
     {
         private final IModData data;
         private final ModList list;
-        private final ItemStack icon;
+        private ItemStack icon;
 
         public ModListEntry(IModData data, ModList list)
         {
@@ -812,11 +812,13 @@ public class CatalogueModListScreen extends Screen
                 // for null pointers. Switches the icon to a grass block if an exception occurs.
                 try
                 {
-                    graphics.renderItem(this.icon, left + 4, top + 2);
+                    graphics.renderFakeItem(this.icon, left + 4, top + 2);
                 }
                 catch(Exception e)
                 {
+                    Constants.LOG.debug("Failed to draw icon for mod '{}'", this.data.getModId());
                     ITEM_ICON_CACHE.put(this.data.getModId(), Items.GRASS_BLOCK);
+                    this.icon = new ItemStack(Items.GRASS_BLOCK);
                 }
             }
 
@@ -870,6 +872,12 @@ public class CatalogueModListScreen extends Screen
                 Item item = optional.get();
                 if(item != Items.AIR)
                 {
+                    // Checks for Forge client item extensions
+                    if(ClientServices.PLATFORM.isCustomItemRendering(item))
+                    {
+                        ITEM_ICON_CACHE.put(this.data.getModId(), Items.GRASS_BLOCK);
+                        return Items.GRASS_BLOCK;
+                    }
                     ITEM_ICON_CACHE.put(this.data.getModId(), item);
                     return item;
                 }

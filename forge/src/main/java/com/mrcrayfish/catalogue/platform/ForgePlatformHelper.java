@@ -5,8 +5,11 @@ import com.mrcrayfish.catalogue.client.ForgeModData;
 import com.mrcrayfish.catalogue.client.IModData;
 import com.mrcrayfish.catalogue.client.screen.CatalogueModListScreen;
 import com.mrcrayfish.catalogue.platform.services.IPlatformHelper;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.server.packs.resources.IoSupplier;
+import net.minecraft.world.item.Item;
+import net.minecraftforge.client.extensions.common.IClientItemExtensions;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.resource.PathPackResources;
@@ -58,5 +61,11 @@ public class ForgePlatformHelper implements IPlatformHelper
                 catch(IOException ignored) {}
             }
         });
+    }
+
+    @Override
+    public boolean isCustomItemRendering(Item item)
+    {
+        return IClientItemExtensions.of(item).getCustomRenderer() != Minecraft.getInstance().getItemRenderer().getBlockEntityRenderer();
     }
 }
