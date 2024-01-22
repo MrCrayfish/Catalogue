@@ -117,12 +117,13 @@ signing {
 tasks.register('signJar', PotentiallySignJar) {
     dependsOn jar
     onlyIf {
-        hasProperty('keyStore') || System.getenv("KEYSTORE")
+        project.hasProperty('keyStore') || System.getenv("KEYSTORE")
     }
     keyStore = findProperty('keyStore') ?: System.getenv("KEYSTORE")
     alias = findProperty('keyStoreAlias') ?: System.getenv("KEYSTORE_ALIAS")
     storePass = findProperty('keyStorePass') ?: System.getenv("KEYSTORE_PASS")
-    input = output = jar.archiveFile
+    input = jar.archiveFile
+    // Output file will automatically have "-signed" suffix.
 }
 
-jar.finalizedBy 'signJar'
+jar.finalizedBy('signJar')

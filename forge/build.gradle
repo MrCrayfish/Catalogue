@@ -73,7 +73,7 @@ tasks.withType(ProcessResources).matching(notForge).configureEach {
     from project(":common").sourceSets.main.resources
 }
 
-jar.finalizedBy('reobfJar')
+jar.finalizedBy('reobfJar', 'signJar')
 
 publishing {
     publications {
@@ -135,9 +135,6 @@ tasks.register('signJar', SignJar) {
     storePass = findProperty('keyStorePass') ?: System.getenv("KEYSTORE_PASS")
     inputFile = outputFile = jar.archiveFile
 }
-
-jar.finalizedBy 'signJar'
-signJar.mustRunAfter 'reobfJar'
 
 sourceSets.each {
     def dir = layout.buildDirectory.dir("sourcesSets/$it.name")
