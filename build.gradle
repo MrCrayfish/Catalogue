@@ -1,3 +1,7 @@
+plugins {
+    id "org.jetbrains.gradle.plugin.idea-ext" version "1.1.7"
+}
+
 subprojects {
     apply plugin: 'java'
     apply plugin: 'signing'
@@ -5,6 +9,8 @@ subprojects {
     java.toolchain.languageVersion = JavaLanguageVersion.of(17)
     java.withSourcesJar()
     java.withJavadocJar()
+
+    version = "${minecraft_version}-${mod_version}"
 
     configurations {
         library
@@ -50,14 +56,49 @@ subprojects {
 
     tasks.withType(JavaCompile).configureEach {
         it.options.encoding = 'UTF-8'
-        it.options.release = 17
+        it.options.getRelease().set(17)
+    }
+
+    processResources {
+        def expandProps = [
+                "group": project.group, //Else we target the task's group.
+                "minecraft_version": minecraft_version,
+                "forge_version": forge_version,
+                "fabric_version": fabric_version,
+                "fabric_loader_version": fabric_loader_version,
+                "neoforge_version": neoforge_version,
+                "neoforge_version_range": neoforge_version_range,
+                "neoforge_loader_version_range": neoforge_loader_version_range,
+                "mod_name": mod_name,
+                "mod_version": mod_version,
+                "mod_author": mod_author,
+                "mod_id": mod_id,
+                "mod_license": mod_license,
+                "mod_desc": mod_desc,
+                "mod_homepage": mod_homepage,
+                "mod_source": mod_source,
+                "mod_issues": mod_issues
+        ]
+        filesMatching(['pack.mcmeta', 'fabric.mod.json', 'META-INF/mods.toml', '*.mixins.json']) {
+            expand expandProps
+        }
+        inputs.properties(expandProps)
     }
 
     // Disables Gradle's custom module metadata from being published to maven. The
     // metadata includes mapped dependencies which are not reasonably consumable by
     // other mod developers.
-    tasks.withType(GenerateModuleMetadata) {
+    tasks.withType(GenerateModuleMetadata).forEach {
         enabled = false
+    }
+
+    tasks.withType(Jar).configureEach {
+        duplicatesStrategy DuplicatesStrategy.INHERIT
+    }
+
+    // Mutes javadoc warnings
+    tasks.withType(Javadoc).configureEach {
+        options.addStringOption('Xdoclint:none', '-quiet')
     }
 }
 

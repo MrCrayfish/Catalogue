@@ -7,6 +7,7 @@ import com.mojang.blaze3d.platform.NativeImage;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.fabricmc.loader.impl.FabricLoaderImpl;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.item.Item;
 
 import java.io.File;
@@ -50,4 +51,7 @@ public class FabricPlatformHelper implements IPlatformHelper
     {
         return false;
     }
+
+    @Override
+    public void drawUpdateIcon(GuiGraphics graphics, int x, int y) {}
 }

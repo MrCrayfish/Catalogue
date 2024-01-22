@@ -1,11 +1,13 @@
 plugins {
-    id 'fabric-loom' version '1.0-SNAPSHOT'
-    id 'maven-publish'
+    id 'java'
     id 'idea'
+    id 'maven-publish'
+    id 'fabric-loom' version '1.2-SNAPSHOT'
 }
 
-archivesBaseName = "${mod_id}-fabric"
-version = "${minecraft_version}-${mod_version}"
+base {
+    archivesName = "${mod_name}-fabric"
+}
 
 sourceSets {
     testMod {
@@ -32,7 +34,9 @@ dependencies {
 }
 
 loom {
-    //accessWidenerPath = file("src/main/resources/example.accesswidener")
+    if(file("src/main/resources/${mod_id}.accesswidener").exists()) {
+        accessWidenerPath.set(file("src/main/resources/${mod_id}.accesswidener"))
+    }
     runs {
         client {
             client()

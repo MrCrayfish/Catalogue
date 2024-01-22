@@ -5,24 +5,24 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.client.ConfigScreenHandler;
-import net.minecraftforge.fml.VersionChecker;
-import net.minecraftforge.fml.loading.moddiscovery.ModInfo;
-import net.minecraftforge.forgespi.language.IModInfo;
+import net.neoforged.fml.VersionChecker;
+import net.neoforged.fml.loading.moddiscovery.ModInfo;
+import net.neoforged.neoforge.client.ConfigScreenHandler;
+import net.neoforged.neoforgespi.language.IModInfo;
 
 import javax.annotation.Nullable;
 
 /**
  * Author: MrCrayfish
  */
-public class ForgeModData implements IModData
+public class NeoForgeModData implements IModData
 {
-    public static final ResourceLocation VERSION_CHECK_ICONS = new ResourceLocation("forge", "textures/gui/version_check_icons.png");
+    public static final ResourceLocation VERSION_CHECK_ICONS = new ResourceLocation("neoforge", "textures/gui/version_check_icons.png");
 
     private final IModInfo info;
     private final Type type;
 
-    public ForgeModData(IModInfo info)
+    public NeoForgeModData(IModInfo info)
     {
         this.info = info;
         this.type = analyzeType(info);

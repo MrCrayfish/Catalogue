@@ -1,7 +1,10 @@
 package com.mrcrayfish.catalogue.client;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.resources.ResourceLocation;
 
 import javax.annotation.Nullable;
 
@@ -56,7 +59,9 @@ public interface IModData
 
     void openConfigScreen(Screen parent);
 
-    record Update(boolean animated, String url, int texOffset) {}
+    void drawUpdateIcon(GuiGraphics graphics, Update update, int x, int y);
+
+    record Update(boolean animated, String url, int texOffset, ResourceLocation textures) {}
 
     enum Type
     {

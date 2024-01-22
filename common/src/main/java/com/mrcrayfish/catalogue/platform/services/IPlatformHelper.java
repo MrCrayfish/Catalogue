@@ -2,6 +2,7 @@ package com.mrcrayfish.catalogue.platform.services;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mrcrayfish.catalogue.client.IModData;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.item.Item;
 
 import java.io.File;
@@ -22,4 +23,6 @@ public interface IPlatformHelper
     void loadNativeImage(String modId, String resource, Consumer<NativeImage> consumer);
 
     boolean isCustomItemRendering(Item item);
+
+    void drawUpdateIcon(GuiGraphics graphics, int x, int y);
 }

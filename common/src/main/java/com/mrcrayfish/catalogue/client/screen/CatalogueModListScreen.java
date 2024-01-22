@@ -20,7 +20,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractSelectionList;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -63,7 +62,6 @@ public class CatalogueModListScreen extends Screen
 {
     private static final Comparator<ModListEntry> SORT = Comparator.comparing(o -> o.getData().getDisplayName());
     private static final ResourceLocation MISSING_BANNER = new ResourceLocation(Constants.MOD_ID, "textures/gui/missing_banner.png");
-    private static final ResourceLocation VERSION_CHECK_ICONS = new ResourceLocation("forge", "textures/gui/version_check_icons.png");
     private static final Map<String, Pair<ResourceLocation, Dimension>> BANNER_CACHE = new HashMap<>();
     private static final Map<String, Pair<ResourceLocation, Dimension>> IMAGE_ICON_CACHE = new HashMap<>();
     private static final Map<String, Item> ITEM_ICON_CACHE = new HashMap<>();
@@ -79,7 +77,7 @@ public class CatalogueModListScreen extends Screen
     private Button configButton;
     private Button websiteButton;
     private Button issueButton;
-    private Checkbox updatesButton;
+    private CatalogueCheckBoxButton updatesButton;
     private StringList descriptionList;
     private int tooltipYOffset;
     private List<? extends FormattedCharSequence> activeTooltip;
@@ -113,8 +111,8 @@ public class CatalogueModListScreen extends Screen
         });
         this.addWidget(this.searchTextField);
         this.modList = new ModList();
-        this.modList.setLeftPos(10);
-        this.modList.setRenderTopAndBottom(false);
+        this.modList.setX(10);
+        this.modList.setRenderHeader(false, 0);
         this.addWidget(this.modList);
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_BACK, btn -> {
             this.minecraft.setScreen(null);
@@ -142,8 +140,8 @@ public class CatalogueModListScreen extends Screen
             this.openLink(this.selectedModData.getIssueTracker());
         }));
         this.issueButton.visible = false;
-        this.descriptionList = new StringList(contentWidth, this.height - 135 - 55, contentLeft, 130);
-        this.descriptionList.setRenderTopAndBottom(false);
+        this.descriptionList = new StringList(contentWidth, 50, contentLeft, 130);
+        this.descriptionList.setRenderHeader(false, 0);
         this.descriptionList.setRenderBackground(false);
         this.addWidget(this.descriptionList);
 
@@ -178,12 +176,17 @@ public class CatalogueModListScreen extends Screen
     }
 
     @Override
+    public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick)
+    {
+        super.renderBackground(graphics, mouseX, mouseY, partialTick);
+        this.drawModList(graphics, mouseX, mouseY, partialTick);
+        this.drawModInfo(graphics, mouseX, mouseY, partialTick);
+    }
+
+    @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks)
     {
         this.activeTooltip = null;
-        this.renderBackground(graphics);
-        this.drawModList(graphics, mouseX, mouseY, partialTicks);
-        this.drawModInfo(graphics, mouseX, mouseY, partialTicks);
         super.render(graphics, mouseX, mouseY, partialTicks);
 
         Optional<IModData> optional = Optional.ofNullable(CACHED_MODS.get(Constants.MOD_ID));
@@ -258,11 +261,7 @@ public class CatalogueModListScreen extends Screen
      */
     private void drawModList(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks)
     {
-        if(ClientServices.PLATFORM.isForge())
-        {
-            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-            graphics.blit(VERSION_CHECK_ICONS, this.modList.getRight() - 24, 10, 24, 0, 8, 8, 64, 16);
-        }
+        ClientServices.PLATFORM.drawUpdateIcon(graphics, this.modList.getRight() - 24, 10);
 
         this.modList.render(graphics, mouseX, mouseY, partialTicks);
         graphics.drawString(this.font, ClientServices.COMPONENT.createTitle().withStyle(ChatFormatting.BOLD).withStyle(ChatFormatting.WHITE), 70, 10, 0xFFFFFF);
@@ -318,13 +317,11 @@ public class CatalogueModListScreen extends Screen
 
             // Draws an icon if there is an update for the mod
             IModData.Update update = this.selectedModData.getUpdate();
-            if(ClientServices.PLATFORM.isForge() && update != null && update.url() != null && !update.url().isBlank())
+            if(update != null && update.url() != null && !update.url().isBlank())
             {
                 Component version = ClientServices.COMPONENT.createVersion(this.selectedModData.getVersion());
                 int versionWidth = this.font.width(version);
-                RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-                int vOffset = update.animated() && (System.currentTimeMillis() / 800 & 1) == 1 ? 8 : 0;
-                graphics.blit(VERSION_CHECK_ICONS, contentLeft + versionWidth + 5, 92, update.texOffset() * 8, vOffset, 8, 8, 64, 16);
+                this.selectedModData.drawUpdateIcon(graphics, update, contentLeft + versionWidth + 5, 92);
                 if(ClientHelper.isMouseWithin(contentLeft + versionWidth + 5, 92, 8, 8, mouseX, mouseY))
                 {
                     Component message = ClientServices.COMPONENT.createFormatted("catalogue.gui.update_available", update.url());
@@ -406,7 +403,7 @@ public class CatalogueModListScreen extends Screen
             this.openLink("https://www.curseforge.com/minecraft/mc-mods/catalogue");
             return true;
         }
-        if(ClientServices.PLATFORM.isForge() && this.selectedModData != null)
+        if(this.selectedModData != null)
         {
             int contentLeft = this.modList.getRight() + 12 + 10;
             Component version = ClientServices.COMPONENT.createVersion(this.selectedModData.getVersion());
@@ -444,8 +441,9 @@ public class CatalogueModListScreen extends Screen
         int contentLeft = this.modList.getRight() + 12 + 10;
         int contentWidth = this.width - contentLeft - 10;
         int labelCount = this.getLabelCount(data);
-        this.descriptionList.updateSize(contentWidth, this.height - 135 - 10 - labelCount * 15, 130, this.height - 10 - labelCount * 15);
-        this.descriptionList.setLeftPos(contentLeft);
+        this.descriptionList.setWidth(contentWidth);
+        this.descriptionList.setHeight(this.height - 135 - 20 - labelCount * 15);
+        this.descriptionList.setX(contentLeft);
         this.descriptionList.setTextFromInfo(data);
         this.descriptionList.setScrollAmount(0);
     }
@@ -535,12 +533,6 @@ public class CatalogueModListScreen extends Screen
         String banner = data.getBanner();
         if(banner != null && !banner.isEmpty())
         {
-            if(ClientServices.PLATFORM.isForge() && (banner.contains("/") || banner.contains("\\")))
-            {
-                Constants.LOG.warn("Skipped loading logo file from {}. The file name '{}' contained illegal characters '/' or '\\'", data.getDisplayName(), banner);
-                return;
-            }
-
             ClientServices.PLATFORM.loadNativeImage(data.getModId(), banner, image ->
             {
                 if(image.getWidth() > 1200 || image.getHeight() > 240)
@@ -566,12 +558,6 @@ public class CatalogueModListScreen extends Screen
         String imageIcon = data.getImageIcon();
         if(imageIcon != null && !imageIcon.isEmpty())
         {
-            if(ClientServices.PLATFORM.isForge() && (imageIcon.contains("/") || imageIcon.contains("\\")))
-            {
-                Constants.LOG.warn("Skipped loading Catalogue icon file from {}. The file name '{}' contained illegal characters '/' or '\\'", data.getDisplayName(), imageIcon);
-                return;
-            }
-
             ClientServices.PLATFORM.loadNativeImage(data.getModId(), imageIcon, image -> {
                 TextureManager textureManager = this.minecraft.getTextureManager();
                 IMAGE_ICON_CACHE.put(data.getModId(), Pair.of(textureManager.register("catalogueicon", this.createLogoTexture(image, false)), new Dimension(image.getWidth(), image.getHeight())));
@@ -583,13 +569,7 @@ public class CatalogueModListScreen extends Screen
         String logoFile = data.getBanner();
         if(logoFile != null && !logoFile.isEmpty())
         {
-            if(ClientServices.PLATFORM.isForge() && (logoFile.contains("/") || logoFile.contains("\\")))
-            {
-                Constants.LOG.warn("Skipped loading logo file from {}. The file name '{}' contained illegal characters '/' or '\\'", data.getDisplayName(), imageIcon);
-                return;
-            }
-
-            ClientServices.PLATFORM.loadNativeImage(data.getModId(), imageIcon, image ->
+            ClientServices.PLATFORM.loadNativeImage(data.getModId(), logoFile, image ->
             {
                 if(image.getWidth() == image.getHeight())
                 {
@@ -631,12 +611,6 @@ public class CatalogueModListScreen extends Screen
         String background = data.getBackground();
         if(background != null && !background.isEmpty())
         {
-            if(ClientServices.PLATFORM.isForge() && (background.contains("/") || background.contains("\\")))
-            {
-                Constants.LOG.warn("Skipped loading Catalogue background file from {}. The file name '{}' contained illegal characters '/' or '\\'", data.getDisplayName(), background);
-                return;
-            }
-
             ClientServices.PLATFORM.loadNativeImage(data.getModId(), background, image ->
             {
                 if(image.getWidth() != 512 || image.getHeight() != 256)
@@ -655,7 +629,8 @@ public class CatalogueModListScreen extends Screen
             public void upload()
             {
                 this.bind();
-                image.upload(0, 0, 0, 0, 0, image.getWidth(), image.getHeight(), smooth, false, false, false);
+                NativeImage pixels = this.getPixels();
+                pixels.upload(0, 0, 0, 0, 0, pixels.getWidth(), pixels.getHeight(), smooth, false, false, false);
             }
         };
     }
@@ -664,19 +639,26 @@ public class CatalogueModListScreen extends Screen
     {
         public ModList()
         {
-            super(CatalogueModListScreen.this.minecraft, 150, CatalogueModListScreen.this.height, 46, CatalogueModListScreen.this.height - 35, 26);
+            super(CatalogueModListScreen.this.minecraft, 150, CatalogueModListScreen.this.height - 35 - 46, 46, 26);
+            this.setRenderBackground(false);
+        }
+
+        @Override
+        public void setRenderHeader(boolean draw, int height)
+        {
+            super.setRenderHeader(draw, height);
         }
 
         @Override
         protected int getScrollbarPosition()
         {
-            return this.x0 + this.width - 6;
+            return this.getX() + this.width - 6;
         }
 
         @Override
         public int getRowLeft()
         {
-            return this.x0;
+            return this.getX();
         }
 
         @Override
@@ -687,9 +669,9 @@ public class CatalogueModListScreen extends Screen
 
         public void filterAndUpdateList(String text)
         {
-            Predicate<IModData> filter = ClientServices.PLATFORM.isForge() ?
-                    data -> !updatesButton.selected() || data.getUpdate() != null :
-                    data -> data.getType() == IModData.Type.DEFAULT || data.getModId().equals("minecraft") || data.getModId().equals("fabric-api") || updatesButton.selected();
+            Predicate<IModData> filter = (ClientServices.PLATFORM.isForge() || ClientServices.PLATFORM.isForge()) ?
+                    data -> !updatesButton.isSelected() || data.getUpdate() != null :
+                    data -> data.getType() == IModData.Type.DEFAULT || data.getModId().equals("minecraft") || data.getModId().equals("fabric-api") || updatesButton.isSelected();
             List<ModListEntry> entries = CACHED_MODS.values().stream()
                 .filter(info -> info.getDisplayName().toLowerCase(Locale.ENGLISH).contains(text.toLowerCase(Locale.ENGLISH)))
                 .filter(filter)
@@ -707,11 +689,12 @@ public class CatalogueModListScreen extends Screen
         }
 
         @Override
-        public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks)
+        public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks)
         {
-            graphics.enableScissor(this.getRowLeft(), this.getTop(), this.getRowLeft() + this.getWidth(), this.getBottom());
-            super.render(graphics, mouseX, mouseY, partialTicks);
-            graphics.disableScissor();
+            graphics.setColor(0.125F, 0.125F, 0.125F, 1.0F);
+            graphics.blit(Screen.BACKGROUND_LOCATION, this.getX(), this.getY(), this.getRight(), this.getBottom() + (int) this.getScrollAmount(), this.width, this.height, 32, 32);
+            graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+            super.renderWidget(graphics, mouseX, mouseY, partialTicks);
         }
 
         @Override
@@ -728,40 +711,9 @@ public class CatalogueModListScreen extends Screen
         }
 
         @Override
-        public void updateNarration(NarrationElementOutput p_169152_)
-        {
-
-        }
-
-        @Override
         public void centerScrollOn(ModListEntry entry)
         {
             super.centerScrollOn(entry);
-        }
-
-        public int getLeft()
-        {
-            return this.x0;
-        }
-
-        public int getRight()
-        {
-            return this.x1;
-        }
-
-        public int getTop()
-        {
-            return this.y0;
-        }
-
-        public int getBottom()
-        {
-            return this.y1;
-        }
-
-        public int getWidth()
-        {
-            return this.width;
         }
     }
 
@@ -824,11 +776,9 @@ public class CatalogueModListScreen extends Screen
 
             // Draws an icon if there is an update for the mod
             IModData.Update update = this.data.getUpdate();
-            if(ClientServices.PLATFORM.isForge() && update != null)
+            if(update != null)
             {
-                RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-                int vOffset = update.animated() && (System.currentTimeMillis() / 800 & 1) == 1 ? 8 : 0;
-                graphics.blit(VERSION_CHECK_ICONS, left + rowWidth - 8 - 10, top + 6, update.texOffset() * 8, vOffset, 8, 8, 64, 16);
+                this.data.drawUpdateIcon(graphics, update, left + rowWidth - 8 - 10, top + 6);
             }
         }
 
@@ -926,8 +876,9 @@ public class CatalogueModListScreen extends Screen
     {
         public StringList(int width, int height, int left, int top)
         {
-            super(CatalogueModListScreen.this.minecraft, width, CatalogueModListScreen.this.height, top, top + height, 10);
-            this.setLeftPos(left);
+            super(CatalogueModListScreen.this.minecraft, width, height, top, 10);
+            this.setX(left);
+            this.setY(top);
         }
 
         public void setTextFromInfo(IModData data)
@@ -939,18 +890,24 @@ public class CatalogueModListScreen extends Screen
         }
 
         @Override
+        public void setRenderHeader(boolean draw, int height)
+        {
+            super.setRenderHeader(draw, height);
+        }
+
+        @Override
         public void setSelected(@Nullable StringEntry entry) {}
 
         @Override
         protected int getScrollbarPosition()
         {
-            return this.x0 + this.width - 7;
+            return this.getX() + this.width - 7;
         }
 
         @Override
         public int getRowLeft()
         {
-            return this.x0;
+            return this.getX();
         }
 
         @Override
@@ -960,15 +917,18 @@ public class CatalogueModListScreen extends Screen
         }
 
         @Override
-        public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks)
+        public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks)
         {
-            graphics.enableScissor(this.x0, this.y0, this.x0 + this.width, this.y1);
-            super.render(graphics, mouseX, mouseY, partialTicks);
+            graphics.enableScissor(this.getX(), this.getY(), this.getRight(), this.getBottom());
+            super.renderWidget(graphics, mouseX, mouseY, partialTicks);
             graphics.disableScissor();
         }
 
         @Override
-        public void updateNarration(NarrationElementOutput output) {}
+        protected void updateWidgetNarration(NarrationElementOutput output)
+        {
+
+        }
     }
 
     private class StringEntry extends ObjectSelectionList.Entry<StringEntry>

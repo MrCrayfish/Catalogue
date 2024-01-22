@@ -7,6 +7,7 @@ import net.fabricmc.loader.api.metadata.CustomValue;
 import net.fabricmc.loader.api.metadata.ModMetadata;
 import net.fabricmc.loader.api.metadata.Person;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import org.apache.commons.lang3.StringUtils;
 
@@ -204,6 +205,9 @@ public class FabricModData implements IModData
             });
         }
     }
+
+    @Override
+    public void drawUpdateIcon(GuiGraphics graphics, Update update, int x, int y) {}
 
     private static Type analyzeType(ModMetadata metadata)
     {

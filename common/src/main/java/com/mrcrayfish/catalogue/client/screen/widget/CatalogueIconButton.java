@@ -51,5 +51,6 @@ public class CatalogueIconButton extends Button
         RenderSystem.setShaderColor(brightness, brightness, brightness, this.alpha);
         int textColor = 0xFFFFFF | Mth.ceil(this.alpha * 255.0F) << 24;
         graphics.drawString(minecraft.font, this.label, iconX + 14, iconY + 1, textColor);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
 }
