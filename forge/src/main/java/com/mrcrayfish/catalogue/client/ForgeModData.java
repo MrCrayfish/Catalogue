@@ -15,16 +15,18 @@ import javax.annotation.Nullable;
 public class ForgeModData implements IModData
 {
     private final IModInfo info;
+    private final Type type;
 
     public ForgeModData(IModInfo info)
     {
         this.info = info;
+        this.type = analyzeType(info);
     }
 
     @Override
     public Type getType()
     {
-        return Type.DEFAULT;
+        return this.type;
     }
 
     @Override
@@ -151,5 +153,14 @@ public class ForgeModData implements IModData
     private String getConfigString(String key)
     {
         return ((ModInfo) this.info).getConfigElement(key).map(Object::toString).orElse(null);
+    }
+
+    private Type analyzeType(IModInfo info)
+    {
+        return switch(info.getOwningFile().getFile().getType())
+        {
+            case MOD -> Type.DEFAULT;
+            case LIBRARY, LANGPROVIDER, GAMELIBRARY -> Type.LIBRARY;
+        };
     }
 }
