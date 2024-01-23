@@ -218,7 +218,7 @@ public class FabricModData implements IModData
         }
 
         String modId = metadata.getId();
-        if(modId.startsWith("fabric-") || modId.equals("minecraft") || modId.equals("java") || modId.equals("fabricloader"))
+        if(modId.startsWith("fabric-") || modId.equals("minecraft") || modId.equals("java") || modId.equals("fabricloader") || modId.equals("mixinextras"))
         {
             return LIBRARY;
         }
