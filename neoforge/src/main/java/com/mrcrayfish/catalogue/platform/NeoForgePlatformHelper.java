@@ -2,6 +2,7 @@ package com.mrcrayfish.catalogue.platform;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mrcrayfish.catalogue.Constants;
 import com.mrcrayfish.catalogue.client.IModData;
 import com.mrcrayfish.catalogue.client.NeoForgeModData;
 import com.mrcrayfish.catalogue.platform.services.IPlatformHelper;
@@ -67,7 +68,7 @@ public class NeoForgePlatformHelper implements IPlatformHelper
         }
         catch(IOException e)
         {
-            throw new RuntimeException(e);
+            Constants.LOG.error("Failed to load image resource {}:file/{}", modId, resource, e);
         }
     }
 

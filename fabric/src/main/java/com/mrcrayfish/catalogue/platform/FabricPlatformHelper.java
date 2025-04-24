@@ -1,6 +1,7 @@
 package com.mrcrayfish.catalogue.platform;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import com.mrcrayfish.catalogue.Constants;
 import com.mrcrayfish.catalogue.client.FabricModData;
 import com.mrcrayfish.catalogue.client.IModData;
 import com.mrcrayfish.catalogue.platform.services.IPlatformHelper;
@@ -48,7 +49,10 @@ public class FabricPlatformHelper implements IPlatformHelper
             {
                 consumer.accept(icon);
             }
-            catch(IOException ignored) {}
+            catch(IOException e)
+            {
+                Constants.LOG.error("Failed to load image resource {}:file/{}", modId, resource, e);
+            }
         });
     }
 
