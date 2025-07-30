@@ -4,6 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.resources.language.I18n;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.VersionChecker;
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -61,7 +63,7 @@ public class NeoForgeModData implements IModData
     @Override
     public String getDescription()
     {
-        return this.info.getDescription();
+        return translateOrFallback("fml.menu.mods.info.description." + this.info.getModId(), this.info::getDescription);
     }
 
     @Override
@@ -220,5 +222,10 @@ public class NeoForgeModData implements IModData
         return versions.stream().filter(version -> {
             return !version.getModId().equals("minecraft") && !version.getModId().equals("neoforge");
         }).map(IModInfo.ModVersion::getModId).collect(Collectors.toUnmodifiableSet());
+    }
+
+    private static String translateOrFallback(String key, Supplier<String> fallback)
+    {
+        return I18n.exists(key) ? I18n.get(key) : fallback.get();
     }
 }
