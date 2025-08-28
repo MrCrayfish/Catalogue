@@ -3,6 +3,8 @@
     "catalogue.gui.mod_list": "Mods",
     "catalogue.gui.search": "Search",
     "catalogue.gui.config": "Config",
+    "catalogue.gui.website": "Website",
+    "catalogue.gui.bug": "Submit Bug",
     "catalogue.gui.open_mods_folder": "Open Mods Folder",
     "catalogue.gui.licenses": "License(s): %s",
     "catalogue.gui.authors": "Author(s): %s",
