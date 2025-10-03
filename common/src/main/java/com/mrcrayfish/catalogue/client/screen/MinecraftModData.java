@@ -38,7 +38,7 @@ public class MinecraftModData implements IModData
     @Override
     public String getVersion()
     {
-        return SharedConstants.VERSION_STRING;
+        return SharedConstants.getCurrentVersion().name();
     }
 
     @Override

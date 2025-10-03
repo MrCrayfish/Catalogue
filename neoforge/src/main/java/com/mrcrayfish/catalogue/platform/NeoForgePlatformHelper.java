@@ -5,6 +5,8 @@ import com.mrcrayfish.catalogue.client.IModData;
 import com.mrcrayfish.catalogue.client.NeoForgeModData;
 import com.mrcrayfish.catalogue.exception.ModResourceNotFoundException;
 import com.mrcrayfish.catalogue.platform.services.IPlatformHelper;
+import cpw.mods.jarhandling.JarContents;
+import cpw.mods.jarhandling.JarResource;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.render.state.GuiRenderState;
 import net.neoforged.fml.ModList;
@@ -46,10 +48,11 @@ public class NeoForgePlatformHelper implements IPlatformHelper
     public NativeImage loadImageFromModResource(String modId, String resource) throws IOException
     {
         IModFileInfo info = ModList.get().getModFileById(modId);
-        Path path = info.getFile().findResource(resource);
-        if(Files.exists(path))
+        JarContents contents = info.getFile().getContents();
+        JarResource file = contents.get(resource);
+        if(file != null)
         {
-            try(InputStream stream = Files.newInputStream(path))
+            try(InputStream stream = file.open())
             {
                 return NativeImage.read(stream);
             }
@@ -71,5 +74,4 @@ public class NeoForgePlatformHelper implements IPlatformHelper
     {
         return graphics.guiRenderState;
     }
-
 }

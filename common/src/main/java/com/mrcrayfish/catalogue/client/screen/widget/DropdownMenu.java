@@ -15,6 +15,7 @@ import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.CommonComponents;
@@ -148,14 +149,14 @@ public class DropdownMenu extends AbstractWidget
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button)
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick)
     {
         if(!this.active || !this.visible)
             return false;
 
         AtomicBoolean clicked = new AtomicBoolean();
         this.layout.visitWidgets(widget -> {
-            if(widget.mouseClicked(mouseX, mouseY, button)) {
+            if(widget.mouseClicked(event, doubleClick)) {
                 clicked.set(true);
             }
         });
@@ -200,7 +201,7 @@ public class DropdownMenu extends AbstractWidget
         }
 
         @Override
-        public void onClick(double mouseX, double mouseY)
+        public void onClick(MouseButtonEvent event, boolean doubleClick)
         {
             this.onClick.run();
             this.parent.deepClose();
@@ -244,7 +245,7 @@ public class DropdownMenu extends AbstractWidget
         }
 
         @Override
-        public void onClick(double mouseX, double mouseY)
+        public void onClick(MouseButtonEvent event, boolean doubleClick)
         {
             boolean newValue = !this.holder.getValue();
             this.holder.setValue(newValue);
@@ -285,7 +286,7 @@ public class DropdownMenu extends AbstractWidget
         }
 
         @Override
-        public void onClick(double mouseX, double mouseY)
+        public void onClick(MouseButtonEvent event, boolean doubleClick)
         {
             if(this.parent.subMenu != null)
             {

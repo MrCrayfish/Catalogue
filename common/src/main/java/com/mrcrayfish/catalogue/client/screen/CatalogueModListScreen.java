@@ -25,6 +25,10 @@ import net.minecraft.client.gui.render.state.BlitRenderState;
 import net.minecraft.client.gui.render.state.GuiRenderState;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.InputWithModifiers;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
@@ -154,7 +158,7 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
                 return super.getInnerWidth();
             }
         };
-        this.searchTextField.setFormatter(this::formatQuery);
+        this.searchTextField.addFormatter(this::formatQuery);
         this.searchTextField.setMaxLength(128);
         this.searchTextField.setValue(OPTION_QUERY.getValue());
         this.searchTextField.setResponder(s -> {
@@ -563,17 +567,17 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button)
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick)
     {
         if(this.menu != null)
         {
-            if(!this.menu.mouseClicked(mouseX, mouseY, button))
+            if(!this.menu.mouseClicked(event, doubleClick))
             {
                 this.setMenu(null);
             }
             return true;
         }
-        if(ClientHelper.isMouseWithin(10, 9, 10, 10, (int) mouseX, (int) mouseY) && button == GLFW.GLFW_MOUSE_BUTTON_1)
+        if(ClientHelper.isMouseWithin(10, 9, 10, 10, (int) event.x(), (int) event.y()) && event.button() == GLFW.GLFW_MOUSE_BUTTON_1)
         {
             this.openLink("https://www.curseforge.com/minecraft/mc-mods/catalogue");
             return true;
@@ -583,7 +587,7 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
             int contentLeft = this.modList.getRight() + 12 + 10;
             Component version = ClientServices.COMPONENT.createVersion(this.selectedModData.getVersion());
             int versionWidth = this.font.width(version);
-            if(ClientHelper.isMouseWithin(contentLeft + versionWidth + 5, 92, 8, 8, (int) mouseX, (int) mouseY))
+            if(ClientHelper.isMouseWithin(contentLeft + versionWidth + 5, 92, 8, 8, (int) event.x(), (int) event.y()))
             {
                 IModData.Update update = this.selectedModData.getUpdate();
                 if(update != null && update.url() != null && !update.url().isBlank())
@@ -592,13 +596,13 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
                 }
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, doubleClick);
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers)
+    public boolean keyPressed(KeyEvent event)
     {
-        if(keyCode == GLFW.GLFW_KEY_F && hasControlDown())
+        if(event.key() == GLFW.GLFW_KEY_F && event.hasControlDown())
         {
             if(!this.searchTextField.isFocused())
             {
@@ -608,7 +612,7 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
             }
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     /**
@@ -829,8 +833,8 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
             //this.setRenderBackground(false); TODO what appened
         }
 
-        @Override
-        protected void renderHeader(GuiGraphics graphics, int mouseX, int mouseY) {}
+        /*@Override
+        protected void renderHeader(GuiGraphics graphics, int mouseX, int mouseY) {}*/
 
         @Override
         protected int scrollBarX()
@@ -899,29 +903,29 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
         protected void renderListSeparators(GuiGraphics graphics) {}
 
         @Override
-        protected void renderSelection(GuiGraphics graphics, int rowTop, int rowStart, int rowBottom, int outlineColour, int backgroundColour)
+        protected void renderSelection(GuiGraphics graphics, ModListEntry entry, int outlineColour)
         {
-            graphics.fill(this.getRowLeft(), rowTop - 2, this.getRowRight(), rowTop + rowBottom + 2, outlineColour);
-            graphics.fill(this.getRowLeft() + 1, rowTop - 1, this.getRowRight() - 1, rowTop + rowBottom + 1, backgroundColour);
+            graphics.fill(entry.getX(), entry.getY(), entry.getX() + entry.getWidth(), entry.getY() + entry.getHeight(), outlineColour);
+            graphics.fill(entry.getX() + 1, entry.getY() + 1, entry.getX() + entry.getWidth() - 1, entry.getY() + entry.getHeight() - 1, 0xFF000000);
         }
 
         @Override
-        public boolean keyPressed(int key, int scanCode, int modifiers)
+        public boolean keyPressed(KeyEvent event)
         {
-            if(key == GLFW.GLFW_KEY_ENTER && this.getSelected() != null)
+            if(event.key() == GLFW.GLFW_KEY_ENTER && this.getSelected() != null)
             {
                 CatalogueModListScreen.this.setSelectedModData(this.getSelected().data);
                 SoundManager handler = Minecraft.getInstance().getSoundManager();
                 handler.play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
                 return true;
             }
-            return super.keyPressed(key, scanCode, modifiers);
+            return super.keyPressed(event);
         }
 
         @Override
-        protected boolean isValidClickButton(int button)
+        protected boolean isValidClickButton(MouseButtonInfo info)
         {
-            return button == 0 || button == 1;
+            return info.button() == 0 || info.button() == 1;
         }
 
         @Override
@@ -931,16 +935,16 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
         }
 
         @Override
-        public void onRelease(double mouseX, double mouseY)
+        public void onRelease(MouseButtonEvent event)
         {
-            super.onRelease(mouseX, mouseY);
+            super.onRelease(event);
             this.hideFavourites = false;
         }
 
         @Override
-        public boolean updateScrolling(double mouseX, double mouseY, int button)
+        public boolean updateScrolling(MouseButtonEvent event)
         {
-            boolean scrolling = super.updateScrolling(mouseX, mouseY, button);
+            boolean scrolling = super.updateScrolling(event);
             this.hideFavourites = scrolling;
             return scrolling;
         }
@@ -1010,54 +1014,54 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
         }
 
         @Override
-        public void render(GuiGraphics graphics, int index, int top, int left, int rowWidth, int rowHeight, int mouseX, int mouseY, boolean hovered, float partialTicks)
+        public void renderContent(GuiGraphics graphics, int mouseX, int mouseY, boolean hovered, float partialTicks)
         {
             // Draws mod name and version
             boolean inOptionsMenu = CatalogueModListScreen.this.menu != null;
-            boolean drawFavouriteIcon = !inOptionsMenu && !this.list.shouldHideFavourites() && ClientHelper.isMouseWithin(left + rowWidth - rowHeight - 4, top, rowHeight + 4, rowHeight, mouseX, mouseY) || FAVOURITES.has(this.data.getModId());
-            graphics.drawString(CatalogueModListScreen.this.font, this.getFormattedModName(drawFavouriteIcon), left + 24, top + 2, 0xFFFFFFFF);
-            graphics.drawString(CatalogueModListScreen.this.font, Component.literal(this.data.getVersion()).withStyle(ChatFormatting.GRAY), left + 24, top + 12, 0xFFFFFFFF);
+            boolean drawFavouriteIcon = !inOptionsMenu && !this.list.shouldHideFavourites() && ClientHelper.isMouseWithin(this.getX() + this.getWidth() - this.getHeight() - 4, this.getY(), this.getHeight() + 4, this.getHeight(), mouseX, mouseY) || FAVOURITES.has(this.data.getModId());
+            graphics.drawString(CatalogueModListScreen.this.font, this.getFormattedModName(drawFavouriteIcon), this.getX() + 24, this.getY() + 4, 0xFFFFFFFF);
+            graphics.drawString(CatalogueModListScreen.this.font, Component.literal(this.data.getVersion()).withStyle(ChatFormatting.GRAY), this.getX() + 24, this.getY() + 14, 0xFFFFFFFF);
 
             // Draw image icon or fallback to item icon
-            this.drawIcon(graphics, top, left);
+            this.drawIcon(graphics, this.getX(), this.getY());
 
             // Draws an icon if there is an update for the mod
             IModData.Update update = this.data.getUpdate();
             if(update != null)
             {
-                int iconLeft = left + rowWidth - 8 - 9 + (drawFavouriteIcon ? -14 : 0);
-                this.data.drawUpdateIcon(graphics, update, iconLeft, top + 7);
+                int iconLeft = this.getY() + this.getWidth() - 8 - 9 + (drawFavouriteIcon ? -14 : 0);
+                this.data.drawUpdateIcon(graphics, update, iconLeft, this.getY() + 7);
             }
 
             if(drawFavouriteIcon)
             {
-                this.button.setX(left + rowWidth - this.button.getWidth() - 8);
-                this.button.setY(top + (rowHeight - this.button.getHeight()) / 2);
+                this.button.setX(this.getX() + this.getWidth() - this.button.getWidth() - 8);
+                this.button.setY(this.getY() + (this.getHeight() - this.button.getHeight()) / 2 - 1);
                 this.button.render(graphics, mouseX, mouseY, partialTicks);
                 if(!inOptionsMenu && this.button.isMouseOver(mouseX, mouseY))
                 {
                     Component label = !FAVOURITES.has(this.data.getModId()) ?
-                        Component.translatable("catalogue.gui.favourite") :
-                        Component.translatable("catalogue.gui.remove_favourite");
+                            Component.translatable("catalogue.gui.favourite") :
+                            Component.translatable("catalogue.gui.remove_favourite");
                     CatalogueModListScreen.this.setTooltip(graphics, label, mouseX, mouseY);
                 }
             }
         }
 
-        private void drawIcon(GuiGraphics graphics, int top, int left)
+        private void drawIcon(GuiGraphics graphics, int left, int top)
         {
             CatalogueModListScreen.this.loadAndCacheIcon(this.data);
 
             ImageInfo iconInfo = IMAGE_ICON_CACHE.get(this.data.getModId());
             if(iconInfo != null)
             {
-                graphics.blit(RenderPipelines.GUI_TEXTURED, iconInfo.resource(), left + 4, top + 3, 0, 0, 16, 16, iconInfo.width(), iconInfo.height(), iconInfo.width(), iconInfo.height());
+                graphics.blit(RenderPipelines.GUI_TEXTURED, iconInfo.resource(), left + 4, top + 5, 0, 0, 16, 16, iconInfo.width(), iconInfo.height(), iconInfo.width(), iconInfo.height());
                 return;
             }
 
             try
             {
-                graphics.renderFakeItem(this.icon, left + 4, top + 3);
+                graphics.renderFakeItem(this.icon, left + 4, top + 5);
             }
             catch(Exception e)
             {
@@ -1143,12 +1147,12 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
         }
 
         @Override
-        public boolean mouseClicked(double mouseX, double mouseY, int button)
+        public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick)
         {
-            if(this.button.mouseClicked(mouseX, mouseY, button))
+            if(this.button.mouseClicked(event, doubleClick))
                 return false;
 
-            if(button == GLFW.GLFW_MOUSE_BUTTON_RIGHT)
+            if(event.button() == GLFW.GLFW_MOUSE_BUTTON_RIGHT)
             {
                 DropdownMenu menu = DropdownMenu.builder(CatalogueModListScreen.this)
                     .setMinItemSize(0, 16)
@@ -1161,10 +1165,10 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
                         String filter = "@dependents:" + this.data.getModId();
                         CatalogueModListScreen.this.searchTextField.setValue(filter);
                     }).build();
-                menu.toggle((int) mouseX, (int) mouseY);
+                menu.toggle((int) event.x(), (int) event.y());
                 return false;
             }
-            else if(button == GLFW.GLFW_MOUSE_BUTTON_LEFT)
+            else if(event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT)
             {
                 CatalogueModListScreen.this.setSelectedModData(this.data);
                 this.list.setSelected(this);
@@ -1204,7 +1208,7 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
             }
 
             @Override
-            public void onPress()
+            public void onPress(InputWithModifiers modifiers)
             {
                 FAVOURITES.toggle(this.modId);
                 ModListEntry.this.list.filterAndUpdateList();
@@ -1244,8 +1248,8 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
             });
         }
 
-        @Override
-        protected void renderHeader(GuiGraphics graphics, int $$1, int $$2) {}
+        /*@Override
+        protected void renderHeader(GuiGraphics graphics, int $$1, int $$2) {}*/
 
         @Override
         public void setSelected(@Nullable StringEntry entry) {}
@@ -1269,15 +1273,9 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
         }
 
         @Override
-        public int getRowTop(int $$0)
-        {
-            return super.getRowTop($$0) + 4;
-        }
-
-        @Override
         protected int contentHeight()
         {
-            return this.getItemCount() * this.itemHeight + 16;
+            return this.getItemCount() * this.defaultEntryHeight + 8;
         }
 
         @Override
@@ -1317,15 +1315,22 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
         }
 
         @Override
-        public void render(GuiGraphics graphics, int index, int top, int left, int rowWidth, int rowHeight, int mouseX, int mouseY, boolean hovered, float partialTicks)
+        public void renderContent(GuiGraphics graphics, int mouseX, int mouseY, boolean hovered, float partialTicks)
         {
-            graphics.drawString(CatalogueModListScreen.this.font, this.line, left, top, 0xFFFFFFFF);
+            graphics.drawString(CatalogueModListScreen.this.font, this.line, this.getX(), this.getY(), 0xFFFFFFFF);
         }
 
         @Override
         public Component getNarration()
         {
             return Component.literal(this.line);
+        }
+
+        @Override
+        public void setY(int y)
+        {
+            // Hacky but cannot override AbstractSelectionList#getFirstEntryY since its private
+            super.setY(y + 4);
         }
     }
 

@@ -5,6 +5,8 @@ import com.mrcrayfish.catalogue.Constants;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.InputWithModifiers;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.CommonComponents;
@@ -32,7 +34,7 @@ public class CatalogueCheckBoxButton extends AbstractButton
     }
 
     @Override
-    public void onPress()
+    public void onPress(InputWithModifiers modifiers)
     {
         this.selected = !this.selected;
         this.onPress.onPress(this);

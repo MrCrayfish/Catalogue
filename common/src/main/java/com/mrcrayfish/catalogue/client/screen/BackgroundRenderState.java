@@ -11,12 +11,12 @@ import org.jetbrains.annotations.Nullable;
 public record BackgroundRenderState(BlitRenderState state) implements GuiElementRenderState
 {
     @Override
-    public void buildVertices(VertexConsumer consumer, float z)
+    public void buildVertices(VertexConsumer consumer)
     {
-        consumer.addVertexWith2DPose(this.state.pose(), (float) this.state.x0(), (float) this.state.y0(), z).setUv(this.state.u0(), this.state.v0()).setColor(0xFFFFFFFF);
-        consumer.addVertexWith2DPose(this.state.pose(), (float) this.state.x0(), (float) this.state.y1(), z).setUv(this.state.u0(), this.state.v1()).setColor(0x00000000);
-        consumer.addVertexWith2DPose(this.state.pose(), (float) this.state.x1(), (float) this.state.y1(), z).setUv(this.state.u1(), this.state.v1()).setColor(0x00000000);
-        consumer.addVertexWith2DPose(this.state.pose(), (float) this.state.x1(), (float) this.state.y0(), z).setUv(this.state.u1(), this.state.v0()).setColor(0xFFFFFFFF);
+        consumer.addVertexWith2DPose(this.state.pose(), (float) this.state.x0(), (float) this.state.y0()).setUv(this.state.u0(), this.state.v0()).setColor(0xFFFFFFFF);
+        consumer.addVertexWith2DPose(this.state.pose(), (float) this.state.x0(), (float) this.state.y1()).setUv(this.state.u0(), this.state.v1()).setColor(0x00000000);
+        consumer.addVertexWith2DPose(this.state.pose(), (float) this.state.x1(), (float) this.state.y1()).setUv(this.state.u1(), this.state.v1()).setColor(0x00000000);
+        consumer.addVertexWith2DPose(this.state.pose(), (float) this.state.x1(), (float) this.state.y0()).setUv(this.state.u1(), this.state.v0()).setColor(0xFFFFFFFF);
     }
 
     @Override
