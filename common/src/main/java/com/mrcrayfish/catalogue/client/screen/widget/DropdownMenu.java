@@ -237,13 +237,13 @@ public class DropdownMenu extends AbstractWidget
         {
             super.renderWidget(graphics, mouseX, mouseY, deltaTick);
             int offset = (this.getHeight() - 14) / 2;
-            graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, this.getX() + this.getWidth() - 14 - offset, this.getY() + offset, this.isHoveredOrFocused() ? 14 : 0, this.holder.getValue() ? 14 : 0, 14, 14, 64, 64);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, this.getX() + this.getWidth() - 14 - offset, this.getY() + offset, this.isHoveredOrFocused() ? 14 : 0, this.holder.get() ? 14 : 0, 14, 14, 64, 64);
         }
 
         @Override
         public void onClick(MouseButtonEvent event, boolean doubleClick)
         {
-            boolean newValue = !this.holder.getValue();
+            boolean newValue = !this.holder.get();
             this.holder.setValue(newValue);
             if(this.callback.apply(newValue))
             {

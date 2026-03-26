@@ -58,7 +58,11 @@ public interface IModData
 
     boolean isLogoSmooth();
 
-    boolean isLibrary();
+    default boolean isLibrary()
+    {
+        Type type = this.getType();
+        return type == Type.LIBRARY || type == Type.GENERATED;
+    }
 
     void openConfigScreen(Screen parent);
 

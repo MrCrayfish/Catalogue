@@ -42,6 +42,7 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -162,13 +163,11 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
         };
         this.searchTextField.addFormatter(this::formatQuery);
         this.searchTextField.setMaxLength(128);
-        this.searchTextField.setValue(OPTION_QUERY.getValue());
+        this.searchTextField.setValue(OPTION_QUERY.get());
         this.searchTextField.setResponder(s -> {
-            if(!OPTION_QUERY.getValue().equals(s)) {
+            if(!OPTION_QUERY.get().equals(s)) {
                 OPTION_QUERY.setValue(s);
-                this.updateSearchFieldSuggestion(s);
                 this.modList.filterAndUpdateList();
-                this.updateSelectedModList();
             }
         });
         this.addWidget(this.searchTextField);
@@ -252,14 +251,12 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
         if(this.selectedModData != null)
         {
             this.setSelectedModData(this.selectedModData);
-            this.updateSelectedModList();
-            ModListEntry entry = this.modList.getEntryFromInfo(this.selectedModData);
+            ModListEntry entry = this.modList.getSelected();
             if(entry != null)
             {
                 this.modList.centerScrollOn(entry);
             }
         }
-        this.updateSearchFieldSuggestion(this.searchTextField.getValue());
     }
 
     /**
@@ -289,7 +286,7 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
         boolean inMenu = this.menu != null;
         super.render(graphics, inMenu ? -1000 : mouseX, inMenu ? -1000 : mouseY, partialTicks);
 
-        if(OPTION_QUERY.getValue().startsWith("@"))
+        if(OPTION_QUERY.get().startsWith("@"))
         {
             int iconX = this.searchTextField.getX() + this.searchTextField.getWidth() - 15;
             int iconY = this.searchTextField.getY() + (this.searchTextField.getHeight() - 10) / 2;
@@ -352,17 +349,9 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
         graphics.setTooltipForNextFrame(this.font.split(message, Math.min(200, this.width)), mouseX, mouseY);
     }
 
-    private void updateSelectedModList()
+    private void updateSearchFieldSuggestion()
     {
-        ModListEntry selectedEntry = this.modList.getEntryFromInfo(this.selectedModData);
-        if(selectedEntry != null)
-        {
-            this.modList.setSelected(selectedEntry);
-        }
-    }
-
-    private void updateSearchFieldSuggestion(String value)
-    {
+        String value = this.searchTextField.getValue();
         if(value.isEmpty())
         {
             this.searchTextField.setSuggestion(Component.translatable("catalogue.gui.search").append(Component.literal("...")).getString());
@@ -395,7 +384,7 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
         else
         {
             Optional<IModData> optional = CACHED_MODS.values().stream().filter(data -> {
-                return data.getDisplayName().toLowerCase(Locale.ENGLISH).startsWith(value.toLowerCase(Locale.ENGLISH));
+                return ModList.FILTER_PREDICATE.test(data) && data.getDisplayName().toLowerCase(Locale.ENGLISH).startsWith(value.toLowerCase(Locale.ENGLISH));
             }).min(Comparator.comparing(IModData::getDisplayName));
             if(optional.isPresent())
             {
@@ -543,21 +532,23 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
      * @param y           the y position
      * @param maxWidth    the maximum width the string can render
      * @param mouseX      the current mouse x position
-     * @param mouseY      the current mouse u position
+     * @param mouseY      the current mouse y position
      */
     private void drawStringWithLabel(GuiGraphics graphics, String format, String text, int x, int y, int maxWidth, int mouseX, int mouseY, ChatFormatting labelColor, ChatFormatting contentColor)
     {
         Component formatted = ClientServices.COMPONENT.createFormatted(format, text);
         String rawString = formatted.getString();
-        String label = rawString.substring(0, rawString.indexOf(":") + 1);
-        String content = rawString.substring(rawString.indexOf(":") + 1);
+        String colon = rawString.contains("：") ? "：" : ":";
+        String label = rawString.substring(0, rawString.indexOf(colon) + 1);
+        String content = rawString.substring(rawString.indexOf(colon) + 1);
         if(this.font.width(formatted) > maxWidth)
         {
             content = this.font.plainSubstrByWidth(content, maxWidth - this.font.width(label) - 7) + "...";
             MutableComponent credits = Component.literal(label).withStyle(labelColor);
             credits.append(Component.literal(content).withStyle(contentColor));
             graphics.drawString(this.font, credits, x, y, 0xFFFFFFFF);
-            if(ClientHelper.isMouseWithin(x, y, maxWidth, 9, mouseX, mouseY)) // Sets the active tool tip if string is too long so users can still read it
+            // Sets the active tool tip if string is too long so users can still read it
+            if(ClientHelper.isMouseWithin(x, y, maxWidth, 9, mouseX, mouseY))
             {
                 this.setTooltip(graphics, Component.literal(text), mouseX, mouseY);
             }
@@ -597,6 +588,10 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
                     this.openLink(update.url());
                 }
             }
+        }
+        if(event.button() == GLFW.GLFW_MOUSE_BUTTON_RIGHT && this.searchTextField.isActive() && this.searchTextField.isHovered())
+        {
+            this.searchTextField.setValue("");
         }
         return super.mouseClicked(event, doubleClick);
     }
@@ -799,7 +794,7 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
     private class ModList extends ObjectSelectionList<ModListEntry>
     {
         private static final Predicate<IModData> SEARCH_PREDICATE = data -> {
-            String query = OPTION_QUERY.getValue();
+            String query = OPTION_QUERY.get();
             if(query.startsWith("@")) {
                 return performSearchFilter(query, data);
             }
@@ -809,7 +804,7 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
         };
         private static final Predicate<IModData> FILTER_PREDICATE = data -> {
             // We ignore filters when using special query
-            String query = OPTION_QUERY.getValue();
+            String query = OPTION_QUERY.get();
             if(query.startsWith("@")) {
                 return true;
             }
@@ -868,9 +863,15 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
                 .filter(SEARCH_PREDICATE)
                 .filter(FILTER_PREDICATE)
                 .map(info -> new ModListEntry(info, this))
-                .sorted(OPTION_SORT.getValue())
+                .sorted(OPTION_SORT.get())
                 .collect(Collectors.toList());
             this.replaceEntries(entries);
+            if(CatalogueModListScreen.this.selectedModData != null)
+            {
+                Optional<ModListEntry> selectedEntry = this.children().stream().filter(entry -> entry.data == CatalogueModListScreen.this.selectedModData).findFirst();
+                selectedEntry.ifPresent(this::setSelected);
+            }
+            CatalogueModListScreen.this.updateSearchFieldSuggestion();
             this.refreshScrollAmount();
         }
 
@@ -880,12 +881,6 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
             if(mouseX > this.getRowLeft() + this.getRowWidth())
                 return Optional.empty();
             return super.getChildAt(mouseX, mouseY);
-        }
-
-        @Nullable
-        public ModListEntry getEntryFromInfo(IModData data)
-        {
-            return this.children().stream().filter(entry -> entry.data == data).findFirst().orElse(null);
         }
 
         @Override
@@ -976,7 +971,7 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
 
     private FormattedCharSequence formatQuery(String partial, int displayPos)
     {
-        String query = OPTION_QUERY.getValue();
+        String query = OPTION_QUERY.get();
         if(!query.startsWith("@"))
             return FormattedCharSequence.forward(partial, Style.EMPTY);
 
@@ -1021,8 +1016,8 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
             // Draws mod name and version
             boolean inOptionsMenu = CatalogueModListScreen.this.menu != null;
             boolean drawFavouriteIcon = !inOptionsMenu && !this.list.shouldHideFavourites() && ClientHelper.isMouseWithin(this.getX() + this.getWidth() - this.getHeight() - 4, this.getY(), this.getHeight() + 4, this.getHeight(), mouseX, mouseY) || FAVOURITES.has(this.data.getModId());
-            graphics.drawString(CatalogueModListScreen.this.font, this.getFormattedModName(drawFavouriteIcon), this.getX() + 24, this.getY() + 4, 0xFFFFFFFF);
-            graphics.drawString(CatalogueModListScreen.this.font, Component.literal(this.data.getVersion()).withStyle(ChatFormatting.GRAY), this.getX() + 24, this.getY() + 14, 0xFFFFFFFF);
+            graphics.drawString(CatalogueModListScreen.this.font, this.getFormattedText(this.data.getDisplayName(), drawFavouriteIcon).withStyle(this.data.getType().getStyle()), this.getX() + 24, this.getY() + 4, 0xFFFFFFFF);
+            graphics.drawString(CatalogueModListScreen.this.font, this.getFormattedText(this.data.getVersion(), drawFavouriteIcon).withStyle(ChatFormatting.GRAY), this.getX() + 24, this.getY() + 14, 0xFFFFFFFF);
 
             // Draw image icon or fallback to item icon
             this.drawIcon(graphics, this.getX(), this.getY());
@@ -1084,6 +1079,12 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
             // Put grass as default item icon
             ITEM_ICON_CACHE.put(this.data.getModId(), Items.GRASS_BLOCK);
 
+            // Minecraft is a grass block
+            if(this.data.getModId().equals("minecraft"))
+            {
+                return Items.GRASS_BLOCK;
+            }
+
             // Special case for Forge to set item icon to anvil
             if(this.data.getModId().equals("forge"))
             {
@@ -1107,8 +1108,13 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
                 }
             }
 
+            // If the mod has a creative tab, Catalogue will attempt to use the tab's icon
+            Optional<Item> optional = BuiltInRegistries.CREATIVE_MODE_TAB.stream().map(CreativeModeTab::getIconItem).map(ItemStack::getItem).filter(item -> item.builtInRegistryHolder().key().identifier().getNamespace().equals(this.data.getModId())).findFirst();
             // If the mod doesn't specify an item to use, Catalogue will attempt to get an item from the mod
-            Optional<Item> optional = BuiltInRegistries.ITEM.stream().filter(item -> item.builtInRegistryHolder().key().identifier().getNamespace().equals(this.data.getModId())).findFirst();
+            if(optional.isEmpty())
+            {
+                optional = BuiltInRegistries.ITEM.stream().filter(item -> item.builtInRegistryHolder().key().identifier().getNamespace().equals(this.data.getModId())).findFirst();
+            }
             if(optional.isPresent())
             {
                 Item item = optional.get();
@@ -1122,9 +1128,8 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
             return Items.GRASS_BLOCK;
         }
 
-        private Component getFormattedModName(boolean favouriteIconVisible)
+        private MutableComponent getFormattedText(String text, boolean favouriteIconVisible)
         {
-            String name = this.data.getDisplayName();
             int paddingEnd = 4;
             int trimWidth = this.list.getRowWidth() - 24 - paddingEnd;
             IModData.Update update = this.data.getUpdate();
@@ -1136,16 +1141,11 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
             {
                 trimWidth -= 18;
             }
-            if(CatalogueModListScreen.this.font.width(name) > trimWidth)
+            if(CatalogueModListScreen.this.font.width(text) > trimWidth)
             {
-                name = CatalogueModListScreen.this.font.plainSubstrByWidth(name, trimWidth - 8).trim() + "...";
+                text = CatalogueModListScreen.this.font.plainSubstrByWidth(text, trimWidth - 8).trim() + "...";
             }
-            MutableComponent title = Component.literal(name);
-            if(this.data.isLibrary())
-            {
-                title.withStyle(ChatFormatting.DARK_GRAY);
-            }
-            return title;
+            return Component.literal(text);
         }
 
         @Override

@@ -64,7 +64,7 @@ public class MinecraftModData implements IModData
     @Override
     public String getLicense()
     {
-        return "All Rights Reserved";
+        return "All Rights Reserved (https://www.minecraft.net/en-us/eula)";
     }
 
     @Nullable
@@ -92,7 +92,7 @@ public class MinecraftModData implements IModData
     @Override
     public String getIssueTracker()
     {
-        return "https://bugs.mojang.com/projects/MC/issues";
+        return "https://bugs.mojang.com/browse/MC";
     }
 
     @Nullable
@@ -129,12 +129,6 @@ public class MinecraftModData implements IModData
 
     @Override
     public boolean isLogoSmooth()
-    {
-        return true;
-    }
-
-    @Override
-    public boolean isLibrary()
     {
         return true;
     }

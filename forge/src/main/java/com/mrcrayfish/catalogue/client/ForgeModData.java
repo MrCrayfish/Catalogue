@@ -30,7 +30,7 @@ public class ForgeModData implements IModData
     {
         this.info = info;
         this.type = analyzeType(info);
-        this.dependencies = this.analyzeDependencies(info);
+        this.dependencies = analyzeDependencies(info);
     }
 
     @Override
@@ -160,12 +160,6 @@ public class ForgeModData implements IModData
     }
 
     @Override
-    public boolean isLibrary()
-    {
-        return this.info.getModId().equals("forge") || this.type != Type.DEFAULT;
-    }
-
-    @Override
     public void openConfigScreen(Screen parent)
     {
         ConfigScreenHandler.getScreenFactoryFor(this.info).map(f -> f.apply(Minecraft.getInstance(), parent)).ifPresent(newScreen -> Minecraft.getInstance().setScreen(newScreen));
@@ -184,8 +178,12 @@ public class ForgeModData implements IModData
         return ((ModInfo) this.info).getConfigElement(key).map(Object::toString).orElse(null);
     }
 
-    private Type analyzeType(IModInfo info)
+    private static Type analyzeType(IModInfo info)
     {
+        if(info.getModId().equals("forge"))
+        {
+            return Type.LIBRARY;
+        }
         return switch(info.getOwningFile().getFile().getType())
         {
             case MOD -> Type.DEFAULT;
@@ -193,7 +191,7 @@ public class ForgeModData implements IModData
         };
     }
 
-    private Set<String> analyzeDependencies(IModInfo source)
+    private static Set<String> analyzeDependencies(IModInfo source)
     {
         List<? extends IModInfo.ModVersion> versions = source.getDependencies();
         return versions.stream().filter(version -> {

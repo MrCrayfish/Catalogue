@@ -171,12 +171,6 @@ public class NeoForgeModData implements IModData
     }
 
     @Override
-    public boolean isLibrary()
-    {
-        return this.info.getModId().equals("neoforge") || this.type != Type.DEFAULT;
-    }
-
-    @Override
     public void openConfigScreen(Screen parent)
     {
         ModList.get()
@@ -203,7 +197,7 @@ public class NeoForgeModData implements IModData
     {
         // For Fabric libraries loaded by Sinytra Connector
         String modId = info.getModId();
-        if(modId.startsWith("fabric-") || modId.equals("fabricloader") || modId.equals("mixinextras"))
+        if(modId.equals("neoforge") || modId.startsWith("fabric-") || modId.equals("fabricloader") || modId.equals("mixinextras"))
         {
             return Type.LIBRARY;
         }
