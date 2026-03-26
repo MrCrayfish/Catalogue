@@ -1,7 +1,7 @@
 package com.mrcrayfish.catalogue.client;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +24,7 @@ public interface IModData
     String getDescription();
 
     @Nullable
+    @Deprecated(forRemoval = true)
     String getItemIcon();
 
     @Nullable
@@ -62,7 +63,7 @@ public interface IModData
 
     void openConfigScreen(Screen parent);
 
-    void drawUpdateIcon(GuiGraphics graphics, Update update, int x, int y);
+    void drawUpdateIcon(GuiGraphicsExtractor extractor, Update update, int x, int y);
 
     record Update(boolean animated, String url, int texOffset, Identifier textures) {}
 

@@ -51,7 +51,7 @@ public class Catalogue implements ClientModInitializer
                 if(widget != null) x += Config.getTitleMenuAlign() == Config.Align.LEFT ? -24 : widget.getWidth() + 24;
                 Button modButton = new CatalogueIconButton(x, y, 30, 0, button -> client.setScreen(new CatalogueModListScreen(screen)));
                 modButton.setTooltip(Tooltip.create(Component.translatable("catalogue.gui.mod_list")));
-                Screens.getButtons(screen).add(modButton);
+                Screens.getWidgets(screen).add(modButton);
             }
             else if(Config.isPauseMenuVisible() && screen instanceof PauseScreen)
             {
@@ -61,7 +61,7 @@ public class Catalogue implements ClientModInitializer
                 if(widget != null) x += Config.getPauseMenuAlign() == Config.Align.LEFT ? -24 : widget.getWidth() + 24;
                 Button modButton = new CatalogueIconButton(x, y, 30, 0, button -> client.setScreen(new CatalogueModListScreen(screen)));
                 modButton.setTooltip(Tooltip.create(Component.translatable("catalogue.gui.mod_list")));
-                Screens.getButtons(screen).add(modButton);
+                Screens.getWidgets(screen).add(modButton);
             }
         });
     }

@@ -6,7 +6,7 @@ import com.mrcrayfish.catalogue.client.screen.DropdownMenuHandler;
 import com.mrcrayfish.catalogue.client.screen.layout.BorderedLinearLayout;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.WidgetSprites;
 import net.minecraft.client.gui.narration.NarratedElementType;
@@ -121,7 +121,7 @@ public class DropdownMenu extends AbstractWidget
     }
 
     @Override
-    protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float deltaTick)
+    protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float deltaTick)
     {
         graphics.pose().pushMatrix();
         Minecraft minecraft = Minecraft.getInstance();
@@ -129,11 +129,11 @@ public class DropdownMenu extends AbstractWidget
         graphics.fill(0, 0, window.getWidth(), window.getHeight(), 0x50000000);
         graphics.fill(this.getX(), this.getY(), this.getX() + this.getWidth(), this.getY() + this.getHeight(), 0xAA000000);
         this.items.forEach(widget -> {
-            widget.render(graphics, mouseX, mouseY, deltaTick);
+            widget.extractRenderState(graphics, mouseX, mouseY, deltaTick);
         });
         if(this.subMenu != null)
         {
-            this.subMenu.render(graphics, mouseX, mouseY, deltaTick);
+            this.subMenu.extractRenderState(graphics, mouseX, mouseY, deltaTick);
         }
         graphics.pose().pushMatrix();
     }
@@ -187,13 +187,13 @@ public class DropdownMenu extends AbstractWidget
         }
 
         @Override
-        protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float deltaTick)
+        protected void extractWidgetRenderState(GuiGraphicsExtractor extractor, int mouseX, int mouseY, float deltaTick)
         {
-            graphics.blitSprite(RenderPipelines.GUI_TEXTURED, SPRITES.get(this.active, this.isHovered() || this.selected()), this.getX(), this.getY(), this.getWidth(), this.getHeight());
+            extractor.blitSprite(RenderPipelines.GUI_TEXTURED, SPRITES.get(this.active, this.isHovered() || this.selected()), this.getX(), this.getY(), this.getWidth(), this.getHeight());
 
             Font font = Minecraft.getInstance().font;
             int offset = (this.getHeight() - font.lineHeight) / 2 + 1;
-            graphics.drawString(Minecraft.getInstance().font, this.getMessage(), this.getX() + offset, this.getY() + offset, 0xFFFFFFFF);
+            extractor.text(Minecraft.getInstance().font, this.getMessage(), this.getX() + offset, this.getY() + offset, 0xFFFFFFFF);
         }
 
         @Override
@@ -233,11 +233,11 @@ public class DropdownMenu extends AbstractWidget
         }
 
         @Override
-        protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float deltaTick)
+        protected void extractWidgetRenderState(GuiGraphicsExtractor extractor, int mouseX, int mouseY, float deltaTick)
         {
-            super.renderWidget(graphics, mouseX, mouseY, deltaTick);
+            super.extractWidgetRenderState(extractor, mouseX, mouseY, deltaTick);
             int offset = (this.getHeight() - 14) / 2;
-            graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, this.getX() + this.getWidth() - 14 - offset, this.getY() + offset, this.isHoveredOrFocused() ? 14 : 0, this.holder.getValue() ? 14 : 0, 14, 14, 64, 64);
+            extractor.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, this.getX() + this.getWidth() - 14 - offset, this.getY() + offset, this.isHoveredOrFocused() ? 14 : 0, this.holder.getValue() ? 14 : 0, 14, 14, 64, 64);
         }
 
         @Override
@@ -273,12 +273,12 @@ public class DropdownMenu extends AbstractWidget
         }
 
         @Override
-        protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float deltaTick)
+        protected void extractWidgetRenderState(GuiGraphicsExtractor extractor, int mouseX, int mouseY, float deltaTick)
         {
-            super.renderWidget(graphics, mouseX, mouseY, deltaTick);
+            super.extractWidgetRenderState(extractor, mouseX, mouseY, deltaTick);
             Font font = Minecraft.getInstance().font;
             int top = this.getY() + (this.getHeight() - font.lineHeight) / 2 + 1;
-            graphics.drawString(Minecraft.getInstance().font, ">", this.getX() + this.getWidth() - 10, top, 0xFFFFFFFF);
+            extractor.text(Minecraft.getInstance().font, ">", this.getX() + this.getWidth() - 10, top, 0xFFFFFFFF);
         }
 
         @Override

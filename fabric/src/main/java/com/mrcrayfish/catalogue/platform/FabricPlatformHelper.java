@@ -9,8 +9,8 @@ import com.mrcrayfish.catalogue.platform.services.IPlatformHelper;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.fabricmc.loader.impl.FabricLoaderImpl;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.render.state.GuiRenderState;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.state.gui.GuiRenderState;
 
 import java.io.File;
 import java.io.IOException;
@@ -63,8 +63,8 @@ public class FabricPlatformHelper implements IPlatformHelper
     }
 
     @Override
-    public GuiRenderState getGuiRenderState(GuiGraphics graphics)
+    public GuiRenderState getGuiRenderState(GuiGraphicsExtractor extractor)
     {
-        return graphics.guiRenderState;
+        return extractor.guiRenderState;
     }
 }

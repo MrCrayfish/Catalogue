@@ -2,8 +2,8 @@ package com.mrcrayfish.catalogue.platform.services;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mrcrayfish.catalogue.client.IModData;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.render.state.GuiRenderState;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.state.gui.GuiRenderState;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,5 +22,5 @@ public interface IPlatformHelper
 
     boolean isModLoaded(String modId);
 
-    GuiRenderState getGuiRenderState(GuiGraphics graphics);
+    GuiRenderState getGuiRenderState(GuiGraphicsExtractor extractor);
 }

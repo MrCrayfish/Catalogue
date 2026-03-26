@@ -30,5 +30,7 @@
     "catalogue.gui.library_count": "%s Libraries",
     "catalogue.gui.advanced_search.info": "Advanced search queries will ignore any active filters",
     "catalogue.gui.show_dependencies": "Show Dependencies",
-    "catalogue.gui.show_dependents": "Show Dependents"
+    "catalogue.gui.show_dependents": "Show Dependents",
+    "catalogue.gui.missing_branding": "Missing Branding",
+    "catalogue.gui.missing_branding.desc": "Are you the author of this mod? Click here for a guide."
 }

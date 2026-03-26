@@ -5,8 +5,8 @@ import com.mrcrayfish.catalogue.client.ForgeModData;
 import com.mrcrayfish.catalogue.client.IModData;
 import com.mrcrayfish.catalogue.exception.ModResourceNotFoundException;
 import com.mrcrayfish.catalogue.platform.services.IPlatformHelper;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.render.state.GuiRenderState;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.state.gui.GuiRenderState;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.forgespi.language.IModFileInfo;
@@ -27,7 +27,7 @@ public class ForgePlatformHelper implements IPlatformHelper
     @Override
     public List<IModData> getAllModData()
     {
-        return ModList.get().getMods().stream().map(ForgeModData::new).collect(Collectors.toList());
+        return ModList.getMods().stream().map(ForgeModData::new).collect(Collectors.toList());
     }
 
     @Override
@@ -45,7 +45,7 @@ public class ForgePlatformHelper implements IPlatformHelper
     @Override
     public NativeImage loadImageFromModResource(String modId, String resource) throws IOException
     {
-        IModFileInfo info = ModList.get().getModFileById(modId);
+        IModFileInfo info = ModList.getModFileById(modId);
         Path path = info.getFile().findResource(resource);
         if(Files.exists(path))
         {
@@ -63,12 +63,12 @@ public class ForgePlatformHelper implements IPlatformHelper
     @Override
     public boolean isModLoaded(String modId)
     {
-        return ModList.get().isLoaded(modId);
+        return ModList.isLoaded(modId);
     }
 
     @Override
-    public GuiRenderState getGuiRenderState(GuiGraphics graphics)
+    public GuiRenderState getGuiRenderState(GuiGraphicsExtractor extractor)
     {
-        return graphics.getRenderState();
+        return extractor.getRenderState();
     }
 }

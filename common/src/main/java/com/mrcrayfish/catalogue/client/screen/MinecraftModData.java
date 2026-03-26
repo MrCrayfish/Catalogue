@@ -3,7 +3,7 @@ package com.mrcrayfish.catalogue.client.screen;
 import com.mrcrayfish.catalogue.client.IModData;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.options.OptionsScreen;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +58,7 @@ public class MinecraftModData implements IModData
     @Override
     public String getImageIcon()
     {
-        return null;
+        return "assets/minecraft/textures/block/grass_block_side.png";
     }
 
     @Override
@@ -143,11 +143,11 @@ public class MinecraftModData implements IModData
     public void openConfigScreen(Screen parent)
     {
         Minecraft minecraft = Minecraft.getInstance();
-        minecraft.setScreen(new OptionsScreen(parent, minecraft.options));
+        minecraft.setScreen(new OptionsScreen(parent, minecraft.options, minecraft.level != null));
     }
 
     @Override
-    public void drawUpdateIcon(GuiGraphics graphics, Update update, int x, int y)
+    public void drawUpdateIcon(GuiGraphicsExtractor graphics, Update update, int x, int y)
     {
 
     }

@@ -5,8 +5,8 @@ import com.mrcrayfish.catalogue.client.IModData;
 import com.mrcrayfish.catalogue.client.NeoForgeModData;
 import com.mrcrayfish.catalogue.exception.ModResourceNotFoundException;
 import com.mrcrayfish.catalogue.platform.services.IPlatformHelper;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.render.state.GuiRenderState;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.state.gui.GuiRenderState;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.jarcontents.JarContents;
 import net.neoforged.fml.jarcontents.JarResource;
@@ -69,8 +69,8 @@ public class NeoForgePlatformHelper implements IPlatformHelper
     }
 
     @Override
-    public GuiRenderState getGuiRenderState(GuiGraphics graphics)
+    public GuiRenderState getGuiRenderState(GuiGraphicsExtractor extractor)
     {
-        return graphics.guiRenderState;
+        return extractor.guiRenderState;
     }
 }

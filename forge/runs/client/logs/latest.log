@@ -1,0 +1,9 @@
+[26Mar2026 14:11:33.710] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher running: args [--launchTarget, forge_userdev_client, --version, MOD_DEV, --assetIndex, 30, --assetsDir, C:\Users\MrCrayfish\AppData\Roaming\.minecraft\assets, --gameDir, .]
+[26Mar2026 14:11:33.711] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: JVM identified as Eclipse Adoptium OpenJDK 64-Bit Server VM 25.0.1+8-LTS
+[26Mar2026 14:11:33.711] [main/INFO] [cpw.mods.modlauncher.Launcher/MODLAUNCHER]: ModLauncher 10.2.4 starting: java version 25.0.1 by Eclipse Adoptium; OS Windows 11 arch amd64 version 10.0
+[26Mar2026 14:11:33.751] [main/INFO] [net.minecraftforge.fml.loading.ImmediateWindowHandler/]: Loading ImmediateWindowProvider fmlearlywindow
+[26Mar2026 14:11:33.880] [main/INFO] [EARLYDISPLAY/]: Trying GL version 4.6
+[26Mar2026 14:11:34.030] [main/INFO] [EARLYDISPLAY/]: Requested GL version 4.6 got version 4.6
+[26Mar2026 14:11:34.088] [main/INFO] [mixin/]: SpongePowered MIXIN Subsystem Version=0.8.7 Source=jar:file:///X:/.gradle/caches/modules-2/files-2.1/org.spongepowered/mixin/0.8.7/8ab114ac385e6dbdad5efafe28aba4df8120915f/mixin-0.8.7.jar!/ Service=ModLauncher Env=CLIENT
+[26Mar2026 14:11:34.134] [EarlyDisplay/INFO] [EARLYDISPLAY/]: GL info: NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2 GL version 4.6.0 NVIDIA 581.80, NVIDIA Corporation
+[26Mar2026 14:11:34.479] [main/INFO] [net.minecraftforge.fml.loading.moddiscovery.JarInJarDependencyLocator/]: No dependencies to load found. Skipping!

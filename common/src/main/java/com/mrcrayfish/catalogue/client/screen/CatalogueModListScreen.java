@@ -15,16 +15,14 @@ import com.mrcrayfish.catalogue.client.screen.widget.CatalogueIconButton;
 import com.mrcrayfish.catalogue.client.screen.widget.DropdownMenu;
 import com.mrcrayfish.catalogue.platform.ClientServices;
 import net.minecraft.ChatFormatting;
-import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.data.models.model.TextureMapping;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.render.TextureSetup;
-import net.minecraft.client.gui.render.state.BlitRenderState;
-import net.minecraft.client.gui.render.state.GuiRenderState;
 import net.minecraft.client.gui.screens.ConfirmLinkScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.InputWithModifiers;
@@ -32,16 +30,18 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.state.gui.BlitRenderState;
+import net.minecraft.client.renderer.state.gui.GuiRenderState;
+import net.minecraft.client.renderer.texture.AbstractTexture;
+import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.chat.CommonComponents;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.*;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.util.Util;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -79,12 +79,13 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
     private static final MutableBoolean OPTION_UPDATES_ONLY = new MutableBoolean(false);
     private static final MutableBoolean OPTION_FAVOURITES_ONLY = new MutableBoolean(false);
     private static final MutableObject<Comparator<ModListEntry>> OPTION_SORT = new MutableObject<>(SORT_ALPHABETICALLY);
+    private static final Identifier MISSING_ICON = Utils.resource("textures/gui/missing_icon.png");
     private static final Identifier MISSING_BANNER = Utils.resource("textures/gui/missing_banner.png");
     private static final Identifier MISSING_BACKGROUND = Utils.resource("textures/gui/missing_background.png");
+    private static final ImageInfo MISSING_ICON_INFO = new ImageInfo(MISSING_ICON, 16, 16, () -> {});
     private static final ImageInfo MISSING_BANNER_INFO = new ImageInfo(MISSING_BANNER, 120, 120, () -> {});
     private static final Map<String, ImageInfo> BANNER_CACHE = new HashMap<>();
     private static final Map<String, ImageInfo> IMAGE_ICON_CACHE = new HashMap<>();
-    private static final Map<String, Item> ITEM_ICON_CACHE = new HashMap<>();
     private static final Map<String, IModData> CACHED_MODS = new HashMap<>();
     private static final Pattern MOD_ID_PATTERN = Pattern.compile("^[a-z][a-z0-9_]{1,63}$");
     private static final Supplier<Pair<Integer, Integer>> COUNTS = Suppliers.memoize(() -> {
@@ -102,6 +103,9 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
         })).build();
     private static final Style SEARCH_FILTER_KEY = Style.EMPTY.withColor(ChatFormatting.GOLD);
     private static final Style SEARCH_FILTER_VALUE = Style.EMPTY.withColor(ChatFormatting.WHITE);
+    private static final Component MISSING_BRANDING_LABEL = Component.translatable("catalogue.gui.missing_branding");
+    private static final Component MISSING_BRANDING_DESC = Component.translatable("catalogue.gui.missing_branding.desc").withStyle(ChatFormatting.GRAY);
+    private static final String BRANDING_GUIDE_URL = "https://github.com/MrCrayfish/Catalogue/wiki/Branding-Guide";
     private static ImageInfo cachedBackground;
     private static boolean loaded = false;
 
@@ -123,7 +127,8 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
         this.parentScreen = parent;
         if(!loaded)
         {
-            ClientServices.PLATFORM.getAllModData().forEach(data -> CACHED_MODS.put(data.getModId(), data));
+            List<IModData> mods = ClientServices.PLATFORM.getAllModData();
+            mods.forEach(data -> CACHED_MODS.put(data.getModId(), data));
             CACHED_MODS.put("minecraft", new MinecraftModData()); // Override minecraft
             BANNER_CACHE.put("minecraft", new ImageInfo(LogoRenderer.MINECRAFT_LOGO, 1024, 256, () -> {}));
             FAVOURITES.load();
@@ -276,28 +281,28 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
     }
 
     @Override
-    public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick)
+    public void extractBackground(GuiGraphicsExtractor extractor, int mouseX, int mouseY, float partialTick)
     {
-        super.renderBackground(graphics, mouseX, mouseY, partialTick);
-        this.drawModList(graphics, mouseX, mouseY, partialTick);
-        this.drawModInfo(graphics, mouseX, mouseY, partialTick);
+        super.extractBackground(extractor, mouseX, mouseY, partialTick);
+        this.extractModList(extractor, mouseX, mouseY, partialTick);
+        this.extractModInfo(extractor, mouseX, mouseY, partialTick);
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks)
+    public void extractRenderState(GuiGraphicsExtractor extractor, int mouseX, int mouseY, float partialTicks)
     {
         boolean inMenu = this.menu != null;
-        super.render(graphics, inMenu ? -1000 : mouseX, inMenu ? -1000 : mouseY, partialTicks);
+        super.extractRenderState(extractor, inMenu ? -1000 : mouseX, inMenu ? -1000 : mouseY, partialTicks);
 
         if(OPTION_QUERY.getValue().startsWith("@"))
         {
             int iconX = this.searchTextField.getX() + this.searchTextField.getWidth() - 15;
             int iconY = this.searchTextField.getY() + (this.searchTextField.getHeight() - 10) / 2;
-            graphics.blit(RenderPipelines.GUI_TEXTURED, CatalogueIconButton.TEXTURE, iconX, iconY, 20, 10, 10, 10, 64, 64);
+            extractor.blit(RenderPipelines.GUI_TEXTURED, CatalogueIconButton.TEXTURE, iconX, iconY, 20, 10, 10, 10, 64, 64);
 
             if(this.menu == null && ClientHelper.isMouseWithin(iconX, iconY, 10, 10, mouseX, mouseY))
             {
-                graphics.setTooltipForNextFrame(Component.translatable("catalogue.gui.advanced_search.info"), mouseX, mouseY);
+                extractor.setTooltipForNextFrame(Component.translatable("catalogue.gui.advanced_search.info"), mouseX, mouseY);
             }
         }
 
@@ -306,28 +311,28 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
         ImageInfo bannerInfo = BANNER_CACHE.get(Constants.MOD_ID);
         if(bannerInfo != null)
         {
-            graphics.blit(RenderPipelines.GUI_TEXTURED, bannerInfo.resource(), 10, 9, 0, 0, 10, 10, bannerInfo.width(), bannerInfo.height(), bannerInfo.width(), bannerInfo.height());
+            extractor.blit(RenderPipelines.GUI_TEXTURED, bannerInfo.resource(), 10, 9, 0, 0, 10, 10, bannerInfo.width(), bannerInfo.height(), bannerInfo.width(), bannerInfo.height());
         }
 
         if(this.menu != null)
         {
-            this.menu.render(graphics, mouseX, mouseY, partialTicks);
+            this.menu.extractRenderState(extractor, mouseX, mouseY, partialTicks);
         }
         else
         {
             if(ClientHelper.isMouseWithin(10, 9, 10, 10, mouseX, mouseY))
             {
-                this.setTooltip(graphics, Component.translatable("catalogue.gui.info"), mouseX, mouseY + 10);
+                this.setTooltip(extractor, Component.translatable("catalogue.gui.info"), mouseX, mouseY + 10);
             }
 
             if(this.optionsButton.isMouseOver(mouseX, mouseY))
             {
-                this.setTooltip(graphics, Component.translatable("catalogue.gui.options"), mouseX, mouseY + 10);
+                this.setTooltip(extractor, Component.translatable("catalogue.gui.options"), mouseX, mouseY + 10);
             }
 
             if(this.modFolderButton.isMouseOver(mouseX, mouseY))
             {
-                this.setTooltip(graphics, Component.translatable("catalogue.gui.open_mods_folder"), mouseX, mouseY);
+                this.setTooltip(extractor, Component.translatable("catalogue.gui.open_mods_folder"), mouseX, mouseY);
             }
         }
     }
@@ -342,14 +347,14 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
      * Sets the tooltip for the next frame. This method will automatically split the given message
      * into separate lines if it reaches the maximum width.
      *
-     * @param graphics a gui graphics instance
+     * @param extractor a gui graphics instance
      * @param message the message to display in the tooltip
      * @param mouseX the current mouse x position
      * @param mouseY the current mouse y position
      */
-    private void setTooltip(GuiGraphics graphics, Component message, int mouseX, int mouseY)
+    private void setTooltip(GuiGraphicsExtractor extractor, Component message, int mouseX, int mouseY)
     {
-        graphics.setTooltipForNextFrame(this.font.split(message, Math.min(200, this.width)), mouseX, mouseY);
+        extractor.setTooltipForNextFrame(this.font.split(message, Math.min(200, this.width)), mouseX, mouseY);
     }
 
     private void updateSelectedModList()
@@ -413,22 +418,22 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
     /**
      * Draws everything considered left of the screen; title, search bar and mod list.
      *
-     * @param graphics     the current GuiGraphics instance
+     * @param extractor     the current GuiGraphics instance
      * @param mouseX       the current mouse x position
      * @param mouseY       the current mouse y position
      * @param partialTicks the partial ticks
      */
-    private void drawModList(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks)
+    private void extractModList(GuiGraphicsExtractor extractor, int mouseX, int mouseY, float partialTicks)
     {
-        this.modList.render(graphics, mouseX, mouseY, partialTicks);
-        this.searchTextField.render(graphics, mouseX, mouseY, partialTicks);
+        this.modList.extractRenderState(extractor, mouseX, mouseY, partialTicks);
+        this.searchTextField.extractRenderState(extractor, mouseX, mouseY, partialTicks);
 
         Component modsLabel = ClientServices.COMPONENT.createTitle().withStyle(ChatFormatting.BOLD).withStyle(ChatFormatting.WHITE);
         Component countLabel = Component.literal("(" + CACHED_MODS.size() + ")").withStyle(ChatFormatting.GRAY);
         MutableComponent title = Component.empty().append(modsLabel).append(" ").append(countLabel);
         int titleWidth = this.font.width(title);
         int titleLeft = this.modList.getX() + (this.modList.getWidth() - titleWidth) / 2;
-        graphics.drawString(this.font, title, titleLeft, 10, 0xFFFFFFFF);
+        extractor.text(this.font, title, titleLeft, 10, 0xFFFFFFFF);
 
         int countLabelWidth = this.font.width(countLabel);
         if(ClientHelper.isMouseWithin(titleLeft + titleWidth - countLabelWidth, 10, countLabelWidth, this.font.lineHeight, mouseX, mouseY))
@@ -438,49 +443,49 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
                 Component.translatable("catalogue.gui.mod_count", counts.getLeft()).getVisualOrderText(),
                 Component.translatable("catalogue.gui.library_count", counts.getRight()).getVisualOrderText()
             );
-            graphics.setTooltipForNextFrame(lines, mouseX, mouseY + 10);
+            extractor.setTooltipForNextFrame(lines, mouseX, mouseY + 10);
         }
     }
 
     /**
      * Draws everything considered right of the screen; logo, mod title, description and more.
      *
-     * @param graphics     the current GuiGraphics instance
+     * @param extractor     the current GuiGraphics instance
      * @param mouseX       the current mouse x position
      * @param mouseY       the current mouse y position
      * @param partialTicks the partial ticks
      */
-    private void drawModInfo(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks)
+    private void extractModInfo(GuiGraphicsExtractor extractor, int mouseX, int mouseY, float partialTicks)
     {
         int listRight = this.modList.getRight();
-        graphics.vLine(listRight + 11, -1, this.height, 0xFF707070);
-        graphics.fill(listRight + 12, 0, this.width, this.height, 0x66000000);
-        this.descriptionList.render(graphics, mouseX, mouseY, partialTicks);
+        extractor.verticalLine(listRight + 11, -1, this.height, 0xFF707070);
+        extractor.fill(listRight + 12, 0, this.width, this.height, 0x66000000);
+        this.descriptionList.extractRenderState(extractor, mouseX, mouseY, partialTicks);
 
         int contentLeft = listRight + 12 + 10;
         int contentWidth = this.width - contentLeft - 10;
 
         if(this.selectedModData != null)
         {
-            this.drawBackground(graphics, this.width - contentLeft + 10, listRight + 12, 0);
+            this.extractBackground(extractor, this.width - contentLeft + 10, listRight + 12, 0);
 
             // Draw mod logo
-            this.drawBanner(graphics, contentWidth, contentLeft, 10, this.width - (listRight + 12 + 10) - 10, 50);
+            this.extractBanner(extractor, contentWidth, contentLeft, 10, this.width - (listRight + 12 + 10) - 10, 50);
 
             // Draw mod name
-            graphics.pose().pushMatrix();
-            graphics.pose().translate(contentLeft, 70);
-            graphics.pose().scale(2.0F, 2.0F);
-            graphics.drawString(this.font, this.selectedModData.getDisplayName(), 0, 0, 0xFFFFFFFF);
-            graphics.pose().popMatrix();
+            extractor.pose().pushMatrix();
+            extractor.pose().translate(contentLeft, 70);
+            extractor.pose().scale(2.0F, 2.0F);
+            extractor.text(this.font, this.selectedModData.getDisplayName(), 0, 0, 0xFFFFFFFF);
+            extractor.pose().popMatrix();
 
             // Draw version
             Component modId = Component.literal("Mod ID: " + this.selectedModData.getModId()).withStyle(ChatFormatting.DARK_GRAY);
             int modIdWidth = this.font.width(modId);
-            graphics.drawString(this.font, modId, contentLeft + contentWidth - modIdWidth, 92, 0xFFFFFFFF);
+            extractor.text(this.font, modId, contentLeft + contentWidth - modIdWidth, 92, 0xFFFFFFFF);
 
             // Draw version
-            this.drawStringWithLabel(graphics, "catalogue.gui.version", this.selectedModData.getVersion().toString(), contentLeft, 92, contentWidth, mouseX, mouseY, ChatFormatting.GRAY, ChatFormatting.WHITE);
+            this.drawStringWithLabel(extractor, "catalogue.gui.version", this.selectedModData.getVersion().toString(), contentLeft, 92, contentWidth, mouseX, mouseY, ChatFormatting.GRAY, ChatFormatting.WHITE);
 
             // Draws an icon if there is an update for the mod
             IModData.Update update = this.selectedModData.getUpdate();
@@ -488,16 +493,16 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
             {
                 Component version = ClientServices.COMPONENT.createVersion(this.selectedModData.getVersion());
                 int versionWidth = this.font.width(version);
-                this.selectedModData.drawUpdateIcon(graphics, update, contentLeft + versionWidth + 5, 92);
+                this.selectedModData.drawUpdateIcon(extractor, update, contentLeft + versionWidth + 5, 92);
                 if(ClientHelper.isMouseWithin(contentLeft + versionWidth + 5, 92, 8, 8, mouseX, mouseY))
                 {
                     Component message = ClientServices.COMPONENT.createFormatted("catalogue.gui.update_available", update.url());
-                    this.setTooltip(graphics, message, mouseX, mouseY);
+                    this.setTooltip(extractor, message, mouseX, mouseY);
                 }
             }
 
             // Draw fade from the bottom
-            graphics.fillGradient(listRight + 12, this.height - 50, this.width, this.height, 0x00000000, 0x66000000);
+            extractor.fillGradient(listRight + 12, this.height - 50, this.width, this.height, 0x00000000, 0x66000000);
 
             int labelOffset = this.height - 18;
 
@@ -505,7 +510,7 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
             String license = this.selectedModData.getLicense();
             if(!license.isBlank())
             {
-                this.drawStringWithLabel(graphics, "catalogue.gui.licenses", license, contentLeft, labelOffset, contentWidth, mouseX, mouseY, ChatFormatting.GRAY, ChatFormatting.WHITE);
+                this.drawStringWithLabel(extractor, "catalogue.gui.licenses", license, contentLeft, labelOffset, contentWidth, mouseX, mouseY, ChatFormatting.GRAY, ChatFormatting.WHITE);
                 labelOffset -= 15;
             }
 
@@ -513,7 +518,7 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
             String credits = this.selectedModData.getCredits();
             if(credits != null && !credits.isBlank())
             {
-                this.drawStringWithLabel(graphics, ClientServices.COMPONENT.getCreditsKey(), credits, contentLeft, labelOffset, contentWidth, mouseX, mouseY, ChatFormatting.GRAY, ChatFormatting.WHITE);
+                this.drawStringWithLabel(extractor, ClientServices.COMPONENT.getCreditsKey(), credits, contentLeft, labelOffset, contentWidth, mouseX, mouseY, ChatFormatting.GRAY, ChatFormatting.WHITE);
                 labelOffset -= 15;
             }
 
@@ -521,13 +526,13 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
             String authors = this.selectedModData.getAuthors();
             if(authors != null && !authors.isBlank())
             {
-                this.drawStringWithLabel(graphics, "catalogue.gui.authors", authors, contentLeft, labelOffset, contentWidth, mouseX, mouseY, ChatFormatting.GRAY, ChatFormatting.WHITE);
+                this.drawStringWithLabel(extractor, "catalogue.gui.authors", authors, contentLeft, labelOffset, contentWidth, mouseX, mouseY, ChatFormatting.GRAY, ChatFormatting.WHITE);
             }
         }
         else
         {
             Component message = Component.translatable("catalogue.gui.no_selection").withStyle(ChatFormatting.GRAY);
-            graphics.drawCenteredString(this.font, message, contentLeft + contentWidth / 2, this.height / 2 - 5, 0xFFFFFF);
+            extractor.centeredText(this.font, message, contentLeft + contentWidth / 2, this.height / 2 - 5, 0xFFFFFF);
         }
     }
 
@@ -536,7 +541,7 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
      * specified max width, it will automatically be trimmed and allows the user to hover the
      * string with their mouse to read the full contents.
      *
-     * @param graphics    the current matrix stack
+     * @param extractor    the current matrix stack
      * @param format      a string to prepend to the content
      * @param text        the string to render
      * @param x           the x position
@@ -545,7 +550,7 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
      * @param mouseX      the current mouse x position
      * @param mouseY      the current mouse u position
      */
-    private void drawStringWithLabel(GuiGraphics graphics, String format, String text, int x, int y, int maxWidth, int mouseX, int mouseY, ChatFormatting labelColor, ChatFormatting contentColor)
+    private void drawStringWithLabel(GuiGraphicsExtractor extractor, String format, String text, int x, int y, int maxWidth, int mouseX, int mouseY, ChatFormatting labelColor, ChatFormatting contentColor)
     {
         Component formatted = ClientServices.COMPONENT.createFormatted(format, text);
         String rawString = formatted.getString();
@@ -556,15 +561,15 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
             content = this.font.plainSubstrByWidth(content, maxWidth - this.font.width(label) - 7) + "...";
             MutableComponent credits = Component.literal(label).withStyle(labelColor);
             credits.append(Component.literal(content).withStyle(contentColor));
-            graphics.drawString(this.font, credits, x, y, 0xFFFFFFFF);
+            extractor.text(this.font, credits, x, y, 0xFFFFFFFF);
             if(ClientHelper.isMouseWithin(x, y, maxWidth, 9, mouseX, mouseY)) // Sets the active tool tip if string is too long so users can still read it
             {
-                this.setTooltip(graphics, Component.literal(text), mouseX, mouseY);
+                this.setTooltip(extractor, Component.literal(text), mouseX, mouseY);
             }
         }
         else
         {
-            graphics.drawString(this.font, Component.literal(label).withStyle(labelColor).append(Component.literal(content).withStyle(contentColor)), x, y, 0xFFFFFFFF);
+            extractor.text(this.font, Component.literal(label).withStyle(labelColor).append(Component.literal(content).withStyle(contentColor)), x, y, 0xFFFFFFFF);
         }
     }
 
@@ -664,29 +669,29 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
      * Draws the background that is visible when a mod is selected. Backgrounds are programmatically
      * faded out to the bottom of the image.
      *
-     * @param graphics a gui graphics instance
+     * @param extractor a gui graphics instance
      * @param contentWidth the widget of the content area
      * @param contentLeft the x position of the content area
      * @param contentTop the y position of the content area
      */
-    private void drawBackground(GuiGraphics graphics, int contentWidth, int contentLeft, int contentTop)
+    private void extractBackground(GuiGraphicsExtractor extractor, int contentWidth, int contentLeft, int contentTop)
     {
         if(this.selectedModData == null)
             return;
 
         Identifier textureRef = cachedBackground != null ? cachedBackground.resource() : MISSING_BACKGROUND;
-        GuiRenderState state = ClientServices.PLATFORM.getGuiRenderState(graphics);
+        GuiRenderState state = ClientServices.PLATFORM.getGuiRenderState(extractor);
         GpuTextureView gpuTexture = this.minecraft.getTextureManager().getTexture(textureRef).getTextureView();
         BlitRenderState blit = new BlitRenderState(
                 RenderPipelines.GUI_TEXTURED,
                 TextureSetup.singleTexture(gpuTexture, RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR)),
-                new Matrix3x2f(graphics.pose()),
+                new Matrix3x2f(extractor.pose()),
                 contentLeft, contentTop, contentLeft + contentWidth, contentTop + 128, 0, 1, 0, 1,
                 0xFFFFFFFF, null);
-        state.submitGuiElement(new BackgroundRenderState(blit));
+        state.addGuiElement(new BackgroundRenderState(blit));
     }
 
-    private void drawBanner(GuiGraphics graphics, int contentWidth, int x, int y, int maxWidth, int maxHeight)
+    private void extractBanner(GuiGraphicsExtractor extractor, int contentWidth, int x, int y, int maxWidth, int maxHeight)
     {
         if(this.selectedModData != null)
         {
@@ -713,7 +718,7 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
                 y += 8;
             }
 
-            graphics.blit(RenderPipelines.GUI_TEXTURED, info.resource(), x, y, 0, 0, displayWidth, displayHeight, info.width(), info.height(), info.width(), info.height());
+            extractor.blit(RenderPipelines.GUI_TEXTURED, info.resource(), x, y, 0, 0, displayWidth, displayHeight, info.width(), info.height(), info.width(), info.height());
         }
     }
 
@@ -758,7 +763,7 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
             return;
 
         // Fills an empty icon as icon may not be present
-        IMAGE_ICON_CACHE.put(data.getModId(), null);
+        IMAGE_ICON_CACHE.put(data.getModId(), MISSING_ICON_INFO);
 
         // Load the icon branding
         Branding.ICON.loadResource(data).ifPresentOrElse(info -> {
@@ -859,7 +864,7 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
         @Override
         public int getRowWidth()
         {
-            return this.width - (this.scrollbarVisible() ? 6 : 0);
+            return this.width - (this.scrollable() ? 6 : 0);
         }
 
         public void filterAndUpdateList()
@@ -868,7 +873,7 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
                 .filter(SEARCH_PREDICATE)
                 .filter(FILTER_PREDICATE)
                 .map(info -> new ModListEntry(info, this))
-                .sorted(OPTION_SORT.getValue())
+                .sorted(OPTION_SORT.get())
                 .collect(Collectors.toList());
             this.replaceEntries(entries);
             this.refreshScrollAmount();
@@ -889,26 +894,26 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
         }
 
         @Override
-        public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks)
+        public void extractWidgetRenderState(GuiGraphicsExtractor extractor, int mouseX, int mouseY, float partialTicks)
         {
-            super.renderWidget(graphics, mouseX, mouseY, partialTicks);
+            super.extractWidgetRenderState(extractor, mouseX, mouseY, partialTicks);
 
             if(this.children().isEmpty())
             {
                 int left = this.getX() + this.getWidth() / 2;
                 int top = this.getY() + (this.getHeight() - CatalogueModListScreen.this.font.lineHeight) / 2;
-                graphics.drawCenteredString(CatalogueModListScreen.this.font, Component.translatable("catalogue.gui.no_mods"), left, top, 0xFFFFFFFF);
+                extractor.centeredText(CatalogueModListScreen.this.font, Component.translatable("catalogue.gui.no_mods"), left, top, 0xFFFFFFFF);
             }
         }
 
         @Override
-        protected void renderListSeparators(GuiGraphics graphics) {}
+        protected void extractListSeparators(GuiGraphicsExtractor graphics) {}
 
         @Override
-        protected void renderSelection(GuiGraphics graphics, ModListEntry entry, int outlineColour)
+        protected void extractSelection(GuiGraphicsExtractor extractor, ModListEntry entry, int outlineColor)
         {
-            graphics.fill(entry.getX(), entry.getY(), entry.getX() + entry.getWidth(), entry.getY() + entry.getHeight(), outlineColour);
-            graphics.fill(entry.getX() + 1, entry.getY() + 1, entry.getX() + entry.getWidth() - 1, entry.getY() + entry.getHeight() - 1, 0xFF000000);
+            extractor.fill(entry.getX(), entry.getY(), entry.getX() + entry.getWidth(), entry.getY() + entry.getHeight(), outlineColor);
+            extractor.fill(entry.getX() + 1, entry.getY() + 1, entry.getX() + entry.getWidth() - 1, entry.getY() + entry.getHeight() - 1, 0xFF000000);
         }
 
         @Override
@@ -1005,128 +1010,76 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
         private final IModData data;
         private final ModList list;
         private final PinnedButton button;
-        private ItemStack icon;
 
         public ModListEntry(IModData data, ModList list)
         {
             this.data = data;
             this.list = list;
             this.button = new PinnedButton(data.getModId());
-            this.icon = new ItemStack(this.getItemIcon());
         }
 
         @Override
-        public void renderContent(GuiGraphics graphics, int mouseX, int mouseY, boolean hovered, float partialTicks)
+        public void extractContent(GuiGraphicsExtractor extractor, int mouseX, int mouseY, boolean hovered, float partialTicks)
         {
             // Draws mod name and version
             boolean inOptionsMenu = CatalogueModListScreen.this.menu != null;
             boolean drawFavouriteIcon = !inOptionsMenu && !this.list.shouldHideFavourites() && ClientHelper.isMouseWithin(this.getX() + this.getWidth() - this.getHeight() - 4, this.getY(), this.getHeight() + 4, this.getHeight(), mouseX, mouseY) || FAVOURITES.has(this.data.getModId());
-            graphics.drawString(CatalogueModListScreen.this.font, this.getFormattedModName(drawFavouriteIcon), this.getX() + 24, this.getY() + 4, 0xFFFFFFFF);
-            graphics.drawString(CatalogueModListScreen.this.font, Component.literal(this.data.getVersion()).withStyle(ChatFormatting.GRAY), this.getX() + 24, this.getY() + 14, 0xFFFFFFFF);
+            int startOffset = this.hasIcon() ? 24 : 5;
+            extractor.text(CatalogueModListScreen.this.font, this.getFormattedModName(drawFavouriteIcon), this.getX() + startOffset, this.getY() + 4, 0xFFFFFFFF);
+            extractor.text(CatalogueModListScreen.this.font, Component.literal(this.data.getVersion()).withStyle(ChatFormatting.GRAY), this.getX() + startOffset, this.getY() + 14, 0xFFFFFFFF);
 
             // Draw image icon or fallback to item icon
-            this.drawIcon(graphics, this.getX(), this.getY());
+            this.extractIcon(extractor, this.getX(), this.getY());
+
+            if(IMAGE_ICON_CACHE.get(this.data.getModId()) == MISSING_ICON_INFO)
+            {
+                if(ClientHelper.isMouseWithin(this.getX() + 4, this.getY() + 5, 16, 16, mouseX, mouseY))
+                {
+                    List<FormattedCharSequence> lines = new ArrayList<>(getFont().split(MISSING_BRANDING_DESC, 150));
+                    lines.addFirst(MISSING_BRANDING_LABEL.getVisualOrderText());
+                    extractor.setTooltipForNextFrame(lines, mouseX, mouseY);
+                }
+            }
 
             // Draws an icon if there is an update for the mod
             IModData.Update update = this.data.getUpdate();
             if(update != null)
             {
                 int iconLeft = this.getY() + this.getWidth() - 8 - 9 + (drawFavouriteIcon ? -14 : 0);
-                this.data.drawUpdateIcon(graphics, update, iconLeft, this.getY() + 7);
+                this.data.drawUpdateIcon(extractor, update, iconLeft, this.getY() + 7);
             }
 
             if(drawFavouriteIcon)
             {
                 this.button.setX(this.getX() + this.getWidth() - this.button.getWidth() - 8);
                 this.button.setY(this.getY() + (this.getHeight() - this.button.getHeight()) / 2 - 1);
-                this.button.render(graphics, mouseX, mouseY, partialTicks);
+                this.button.extractRenderState(extractor, mouseX, mouseY, partialTicks);
                 if(!inOptionsMenu && this.button.isMouseOver(mouseX, mouseY))
                 {
                     Component label = !FAVOURITES.has(this.data.getModId()) ?
                             Component.translatable("catalogue.gui.favourite") :
                             Component.translatable("catalogue.gui.remove_favourite");
-                    CatalogueModListScreen.this.setTooltip(graphics, label, mouseX, mouseY);
+                    CatalogueModListScreen.this.setTooltip(extractor, label, mouseX, mouseY);
                 }
             }
         }
 
-        private void drawIcon(GuiGraphics graphics, int left, int top)
+        private void extractIcon(GuiGraphicsExtractor extractor, int left, int top)
         {
             CatalogueModListScreen.this.loadAndCacheIcon(this.data);
-
             ImageInfo iconInfo = IMAGE_ICON_CACHE.get(this.data.getModId());
             if(iconInfo != null)
             {
-                graphics.blit(RenderPipelines.GUI_TEXTURED, iconInfo.resource(), left + 4, top + 5, 0, 0, 16, 16, iconInfo.width(), iconInfo.height(), iconInfo.width(), iconInfo.height());
-                return;
+                extractor.blit(RenderPipelines.GUI_TEXTURED, iconInfo.resource(), left + 4, top + 5, 0, 0, 16, 16, iconInfo.width(), iconInfo.height(), iconInfo.width(), iconInfo.height());
             }
-
-            try
-            {
-                graphics.renderFakeItem(this.icon, left + 4, top + 5);
-            }
-            catch(Exception e)
-            {
-                // Attempt to catch exceptions when rendering item. Sometime level instance isn't checked for null
-                Constants.LOG.debug("Failed to draw icon for mod '{}'", this.data.getModId());
-                ITEM_ICON_CACHE.put(this.data.getModId(), Items.GRASS_BLOCK);
-                this.icon = new ItemStack(Items.GRASS_BLOCK);
-            }
-        }
-
-        private Item getItemIcon()
-        {
-            if(ITEM_ICON_CACHE.containsKey(this.data.getModId()))
-            {
-                return ITEM_ICON_CACHE.get(this.data.getModId());
-            }
-
-            // Put grass as default item icon
-            ITEM_ICON_CACHE.put(this.data.getModId(), Items.GRASS_BLOCK);
-
-            // Special case for Forge to set item icon to anvil
-            if(this.data.getModId().equals("forge"))
-            {
-                Item item = Items.ANVIL;
-                ITEM_ICON_CACHE.put("forge", item);
-                return item;
-            }
-
-            String itemIcon = this.data.getItemIcon();
-            if(itemIcon != null && !itemIcon.isEmpty())
-            {
-                Identifier resource = Identifier.tryParse(itemIcon);
-                if(resource != null)
-                {
-                    Item item = BuiltInRegistries.ITEM.getValue(resource);
-                    if(item != Items.AIR)
-                    {
-                        ITEM_ICON_CACHE.put(this.data.getModId(), item);
-                        return item;
-                    }
-                }
-            }
-
-            // If the mod doesn't specify an item to use, Catalogue will attempt to get an item from the mod
-            Optional<Item> optional = BuiltInRegistries.ITEM.stream().filter(item -> item.builtInRegistryHolder().key().identifier().getNamespace().equals(this.data.getModId())).findFirst();
-            if(optional.isPresent())
-            {
-                Item item = optional.get();
-                if(item != Items.AIR)
-                {
-                    ITEM_ICON_CACHE.put(this.data.getModId(), item);
-                    return item;
-                }
-            }
-
-            return Items.GRASS_BLOCK;
         }
 
         private Component getFormattedModName(boolean favouriteIconVisible)
         {
             String name = this.data.getDisplayName();
             int paddingEnd = 4;
-            int trimWidth = this.list.getRowWidth() - 24 - paddingEnd;
+            int startOffset = this.hasIcon() ? 24 : 4;
+            int trimWidth = this.list.getRowWidth() - startOffset - paddingEnd;
             IModData.Update update = this.data.getUpdate();
             if(update != null)
             {
@@ -1146,6 +1099,11 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
                 title.withStyle(ChatFormatting.DARK_GRAY);
             }
             return title;
+        }
+
+        private boolean hasIcon()
+        {
+            return IMAGE_ICON_CACHE.get(this.data.getModId()) != null;
         }
 
         @Override
@@ -1172,6 +1130,15 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
             }
             else if(event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT)
             {
+                if(IMAGE_ICON_CACHE.get(this.data.getModId()) == MISSING_ICON_INFO)
+                {
+                    if(ClientHelper.isMouseWithin(this.getX() + 4, this.getY() + 5, 16, 16, (int) event.x(), (int) event.y()))
+                    {
+                        openLink(BRANDING_GUIDE_URL);
+                        return true;
+                    }
+                }
+
                 CatalogueModListScreen.this.setSelectedModData(this.data);
                 this.list.setSelected(this);
                 return true;
@@ -1203,10 +1170,10 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
             }
 
             @Override
-            protected void renderContents(GuiGraphics graphics, int mouseX, int mouseY, float partialTick)
+            protected void extractContents(GuiGraphicsExtractor extractor, int mouseX, int mouseY, float partialTick)
             {
                 int textureU = FAVOURITES.has(this.modId) ? 10 : 0;
-                graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, this.getX(), this.getY(), textureU, 10, 10, 10, 64, 64);
+                extractor.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, this.getX(), this.getY(), textureU, 10, 10, 10, 64, 64);
             }
 
             @Override
@@ -1281,23 +1248,23 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
         }
 
         @Override
-        public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks)
+        public void extractWidgetRenderState(GuiGraphicsExtractor extractor, int mouseX, int mouseY, float partialTicks)
         {
-            graphics.enableScissor(this.getX(), this.getY(), this.getRight(), this.getBottom());
-            super.renderWidget(graphics, mouseX, mouseY, partialTicks);
-            graphics.disableScissor();
+            extractor.enableScissor(this.getX(), this.getY(), this.getRight(), this.getBottom());
+            super.extractWidgetRenderState(extractor, mouseX, mouseY, partialTicks);
+            extractor.disableScissor();
         }
 
         @Override
-        protected void renderListBackground(GuiGraphics graphics)
+        protected void extractListBackground(GuiGraphicsExtractor extractor)
         {
             int x = this.getX();
             int y = this.getY();
             int width = this.getWidth();
             int height = this.getHeight();
-            graphics.fill(x, y + 1, x + 1, y + height - 1, 0x77000000);
-            graphics.fill(x + 1, y, x + width - 1, y + height, 0x77000000);
-            graphics.fill(x + width - 1, y + 1, x + width, y + height - 1, 0x77000000);
+            extractor.fill(x, y + 1, x + 1, y + height - 1, 0x77000000);
+            extractor.fill(x + 1, y, x + width - 1, y + height, 0x77000000);
+            extractor.fill(x + width - 1, y + 1, x + width, y + height - 1, 0x77000000);
         }
 
         @Override
@@ -1317,9 +1284,9 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
         }
 
         @Override
-        public void renderContent(GuiGraphics graphics, int mouseX, int mouseY, boolean hovered, float partialTicks)
+        public void extractContent(GuiGraphicsExtractor extractor, int mouseX, int mouseY, boolean hovered, float partialTicks)
         {
-            graphics.drawString(CatalogueModListScreen.this.font, this.line, this.getX(), this.getY(), 0xFFFFFFFF);
+            extractor.text(CatalogueModListScreen.this.font, this.line, this.getX(), this.getY(), 0xFFFFFFFF);
         }
 
         @Override

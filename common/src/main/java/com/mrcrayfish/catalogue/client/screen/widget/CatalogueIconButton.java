@@ -2,7 +2,7 @@ package com.mrcrayfish.catalogue.client.screen.widget;
 
 import com.mrcrayfish.catalogue.Constants;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -44,9 +44,9 @@ public class CatalogueIconButton extends Button
     }
 
     @Override
-    public void renderContents(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks)
+    public void extractContents(GuiGraphicsExtractor extractor, int mouseX, int mouseY, float partialTicks)
     {
-        this.renderDefaultSprite(graphics);
+        this.extractDefaultSprite(extractor);
         Minecraft minecraft = Minecraft.getInstance();
         //RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, this.alpha);
         int contentWidth = 10 + minecraft.font.width(this.label) + (!this.label.getString().isEmpty() ? 4 : 0);
@@ -54,10 +54,10 @@ public class CatalogueIconButton extends Button
         int iconY = this.getY() + (this.height - 10) / 2;
         float brightness = this.active ? 1.0F : 0.5F;
         //RenderSystem.setShaderColor(brightness, brightness, brightness, this.alpha);
-        graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, iconX, iconY, this.u, this.v, 10, 10, 64, 64);
+        extractor.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, iconX, iconY, this.u, this.v, 10, 10, 64, 64);
         //RenderSystem.setShaderColor(brightness, brightness, brightness, this.alpha);
         int textColor = (this.active ? 16777215 : 10526880) | 0xFF000000;
-        graphics.drawString(minecraft.font, this.label, iconX + 14, iconY + 1, textColor);
+        extractor.text(minecraft.font, this.label, iconX + 14, iconY + 1, textColor);
         //RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
 

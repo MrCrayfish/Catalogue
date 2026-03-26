@@ -1,7 +1,7 @@
 package com.mrcrayfish.catalogue.client.screen.widget;
 
 import com.mrcrayfish.catalogue.Constants;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.InputWithModifiers;
@@ -38,10 +38,10 @@ public class CatalogueCheckBoxButton extends AbstractButton
     }
 
     @Override
-    public void renderContents(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks)
+    public void extractContents(GuiGraphicsExtractor extractor, int mouseX, int mouseY, float partialTicks)
     {
-        this.renderDefaultSprite(graphics);
-        graphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, this.getX(), this.getY(), this.isHoveredOrFocused() ? 14 : 0, this.isSelected() ? 14 : 0, 14, 14, 64, 64);
+        this.extractDefaultSprite(extractor);
+        extractor.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, this.getX(), this.getY(), this.isHoveredOrFocused() ? 14 : 0, this.isSelected() ? 14 : 0, 14, 14, 64, 64);
     }
 
     @Override

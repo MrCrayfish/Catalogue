@@ -1,7 +1,7 @@
 package com.mrcrayfish.catalogue.client;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.resources.language.I18n;
@@ -187,10 +187,10 @@ public class NeoForgeModData implements IModData
     }
 
     @Override
-    public void drawUpdateIcon(GuiGraphics graphics, Update update, int x, int y)
+    public void drawUpdateIcon(GuiGraphicsExtractor extractor, Update update, int x, int y)
     {
         int vOffset = update.animated() && (System.currentTimeMillis() / 800 & 1) == 1 ? 8 : 0;
-        graphics.blit(RenderPipelines.GUI_TEXTURED, update.textures(), x, y, update.texOffset() * 8, vOffset, 8, 8, 64, 16);
+        extractor.blit(RenderPipelines.GUI_TEXTURED, update.textures(), x, y, update.texOffset() * 8, vOffset, 8, 8, 64, 16);
     }
 
     @Nullable
