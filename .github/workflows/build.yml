@@ -72,7 +72,7 @@ jobs:
           GPR_USER: "MrCrayfish"
           GPR_KEY: ${{ secrets.GPR_TOKEN }}
           PACKAGES_REPO: ${{ vars.PACKAGES_REPOSITORY }}
-          KEYSTORE: ${{ steps.load_keystore.outputs.filePath }}
+          KEYSTORE: ${{ steps.load_keystore.outputs.keystore }}
           KEYSTORE_ALIAS: ${{ secrets.MRCRAYFISH_JKS_ALIAS }}
           KEYSTORE_PASS: ${{ secrets.MRCRAYFISH_JKS_PASSPHRASE }}
           TARGET_LOADER: "neoforge"
@@ -82,7 +82,7 @@ jobs:
           GPR_USER: "MrCrayfish"
           GPR_KEY: ${{ secrets.GPR_TOKEN }}
           PACKAGES_REPO: ${{ vars.PACKAGES_REPOSITORY }}
-          KEYSTORE: ${{ steps.load_keystore.outputs.filePath }}
+          KEYSTORE: ${{ steps.load_keystore.outputs.keystore }}
           KEYSTORE_ALIAS: ${{ secrets.MRCRAYFISH_JKS_ALIAS }}
           KEYSTORE_PASS: ${{ secrets.MRCRAYFISH_JKS_PASSPHRASE }}
           TARGET_LOADER: "fabric"
