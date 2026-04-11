@@ -10,8 +10,9 @@ pluginManagement {
                 }
             }
             filter {
-                includeGroupAndSubgroups('net.fabricmc')
-                includeGroup('fabric-loom')
+                includeGroup('net.fabricmc')
+                includeGroup('net.fabricmc.unpick')
+                includeGroup('net.fabricmc.fabric-loom')
             }
         }
         exclusiveContent {
@@ -22,8 +23,7 @@ pluginManagement {
                 }
             }
             filter {
-                includeGroupAndSubgroups("net.neoforged")
-                includeGroup("codechicken")
+                includeGroupAndSubgroups('net.neoforged')
             }
         }
         exclusiveContent {
@@ -35,17 +35,6 @@ pluginManagement {
             }
             filter {
                 includeGroupAndSubgroups("org.spongepowered")
-            }
-        }
-        exclusiveContent {
-            forRepository {
-                maven {
-                    name = 'Forge'
-                    url = uri('https://maven.minecraftforge.net')
-                }
-            }
-            filter {
-                includeGroupAndSubgroups('net.minecraftforge')
             }
         }
     }
@@ -65,6 +54,5 @@ def includeModloader(String name) {
 
 rootProject.name = 'Catalogue'
 include("common")
-//includeModloader("forge")
 includeModloader("fabric")
 includeModloader("neoforge")
