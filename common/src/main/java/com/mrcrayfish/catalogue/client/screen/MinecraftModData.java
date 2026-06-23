@@ -49,13 +49,6 @@ public class MinecraftModData implements IModData
 
     @Nullable
     @Override
-    public String getItemIcon()
-    {
-        return null;
-    }
-
-    @Nullable
-    @Override
     public String getImageIcon()
     {
         return "assets/minecraft/textures/block/grass_block_side.png";
@@ -143,7 +136,7 @@ public class MinecraftModData implements IModData
     public void openConfigScreen(Screen parent)
     {
         Minecraft minecraft = Minecraft.getInstance();
-        minecraft.setScreen(new OptionsScreen(parent, minecraft.options, minecraft.level != null));
+        minecraft.gui.setScreen(new OptionsScreen(parent, minecraft.options, minecraft.level != null));
     }
 
     @Override

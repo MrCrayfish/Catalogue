@@ -5,6 +5,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.resources.language.I18n;
+import net.minecraft.locale.Language;
 import net.minecraft.resources.Identifier;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.VersionChecker;
@@ -64,19 +65,6 @@ public class NeoForgeModData implements IModData
     public String getDescription()
     {
         return translateOrFallback("fml.menu.mods.info.description." + this.info.getModId(), this.info::getDescription);
-    }
-
-    @Override
-    @Nullable
-    public String getItemIcon()
-    {
-        String itemIcon = (String) this.info.getModProperties().get("catalogueItemIcon");
-        if(itemIcon == null)
-        {
-            // Fallback to old method for backwards compatibility on Forge
-            itemIcon = (String) ((ModInfo) this.info).getConfigElement("itemIcon").orElse(null);
-        }
-        return itemIcon;
     }
 
     @Nullable
@@ -183,7 +171,7 @@ public class NeoForgeModData implements IModData
             .getModContainerById(this.info.getModId())
             .flatMap(container -> IConfigScreenFactory.getForMod(this.info)
                 .map(f -> f.createScreen(container, parent)))
-            .ifPresent(newScreen -> Minecraft.getInstance().setScreen(newScreen));
+            .ifPresent(newScreen -> Minecraft.getInstance().gui.setScreen(newScreen));
     }
 
     @Override
@@ -225,6 +213,7 @@ public class NeoForgeModData implements IModData
 
     private static String translateOrFallback(String key, Supplier<String> fallback)
     {
-        return I18n.exists(key) ? I18n.get(key) : fallback.get();
+        Language language = Language.getInstance();
+        return language.has(key) ? language.getOrDefault(key) : fallback.get();
     }
 }

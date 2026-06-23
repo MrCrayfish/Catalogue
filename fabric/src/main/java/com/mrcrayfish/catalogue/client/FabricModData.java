@@ -30,7 +30,6 @@ public class FabricModData implements IModData
     private final String imageIcon;
     private final String imageBanner;
     private final String imageBackground;
-    private final String itemIcon;
 
     public FabricModData(ModMetadata metadata)
     {
@@ -72,7 +71,6 @@ public class FabricModData implements IModData
             }
         }
         this.imageIcon = imageIcon;
-        this.itemIcon = itemIcon;
         this.imageBanner = imageBanner;
         this.imageBackground = imageBackground;
     }
@@ -105,13 +103,6 @@ public class FabricModData implements IModData
     public String getDescription()
     {
         return this.metadata.getDescription();
-    }
-
-    @Nullable
-    @Override
-    public String getItemIcon()
-    {
-        return this.itemIcon;
     }
 
     @Nullable
@@ -210,7 +201,7 @@ public class FabricModData implements IModData
                 Screen configScreen = configFactory.apply(parent, container);
                 if(configScreen != null)
                 {
-                    Minecraft.getInstance().setScreen(configScreen);
+                    Minecraft.getInstance().gui.setScreen(configScreen);
                 }
             });
         }

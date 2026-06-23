@@ -24,10 +24,6 @@ public interface IModData
     String getDescription();
 
     @Nullable
-    @Deprecated(forRemoval = true)
-    String getItemIcon();
-
-    @Nullable
     String getImageIcon();
 
     String getLicense();

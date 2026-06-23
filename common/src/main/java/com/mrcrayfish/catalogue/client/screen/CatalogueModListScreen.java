@@ -149,7 +149,7 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
     @Override
     public void onClose()
     {
-        this.minecraft.setScreen(this.parentScreen);
+        this.minecraft.gui.setScreen(this.parentScreen);
     }
 
     @Override
@@ -181,7 +181,7 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
         this.modList.setX(10);
         this.addWidget(this.modList);
         this.addRenderableWidget(Button.builder(CommonComponents.GUI_BACK, btn -> {
-            this.minecraft.setScreen(this.parentScreen);
+            this.minecraft.gui.setScreen(this.parentScreen);
         }).pos(10, this.modList.getBottom() + 8).size(127, 20).build());
         this.modFolderButton = this.addRenderableWidget(new CatalogueIconButton(140, this.modList.getBottom() + 8, 0, 0, onPress -> {
             Util.getPlatform().openFile(ClientServices.PLATFORM.getModDirectory());

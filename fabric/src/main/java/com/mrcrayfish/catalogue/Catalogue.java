@@ -49,7 +49,7 @@ public class Catalogue implements ClientModInitializer
                 int x = widget != null ? widget.getX() : screen.width / 2 - 124;
                 int y = widget != null ? widget.getY() : screen.height / 4 + 48 + 48;
                 if(widget != null) x += Config.getTitleMenuAlign() == Config.Align.LEFT ? -24 : widget.getWidth() + 24;
-                Button modButton = new CatalogueIconButton(x, y, 30, 0, button -> client.setScreen(new CatalogueModListScreen(screen)));
+                Button modButton = new CatalogueIconButton(x, y, 30, 0, button -> client.gui.setScreen(new CatalogueModListScreen(screen)));
                 modButton.setTooltip(Tooltip.create(Component.translatable("catalogue.gui.mod_list")));
                 Screens.getWidgets(screen).add(modButton);
             }
@@ -59,7 +59,7 @@ public class Catalogue implements ClientModInitializer
                 int x = widget != null ? widget.getX() : screen.width / 2 - 124;
                 int y = widget != null ? widget.getY() : screen.height / 4 + 32 + 48;
                 if(widget != null) x += Config.getPauseMenuAlign() == Config.Align.LEFT ? -24 : widget.getWidth() + 24;
-                Button modButton = new CatalogueIconButton(x, y, 30, 0, button -> client.setScreen(new CatalogueModListScreen(screen)));
+                Button modButton = new CatalogueIconButton(x, y, 30, 0, button -> client.gui.setScreen(new CatalogueModListScreen(screen)));
                 modButton.setTooltip(Tooltip.create(Component.translatable("catalogue.gui.mod_list")));
                 Screens.getWidgets(screen).add(modButton);
             }
