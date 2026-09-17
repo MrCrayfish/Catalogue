@@ -12,13 +12,13 @@ public class NeoForgeComponentHelper implements IComponentHelper
     @Override
     public MutableComponent createTitle()
     {
-        return Component.translatable("fml.menu.mods.title");
+        return Component.translatable("fml.menu.mods");
     }
 
     @Override
     public MutableComponent createVersion(String version)
     {
-        return Component.translatable("fml.menu.mods.info.version", version);
+        return Component.translatable("catalogue.gui.version", version);
     }
 
     @Override

@@ -2,9 +2,11 @@ package com.mrcrayfish.catalogue.client.screen;
 
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
+import com.mojang.blaze3d.Blaze3D;
+import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.FilterMode;
-import com.mojang.blaze3d.textures.GpuTextureView;
+import com.mojang.renderpearl.api.textures.FilterMode;
+import com.mojang.renderpearl.api.textures.GpuTextureView;
 import com.mrcrayfish.catalogue.Constants;
 import com.mrcrayfish.catalogue.Utils;
 import com.mrcrayfish.catalogue.client.Branding;
@@ -16,7 +18,6 @@ import com.mrcrayfish.catalogue.client.screen.widget.DropdownMenu;
 import com.mrcrayfish.catalogue.platform.ClientServices;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.data.models.model.TextureMapping;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -32,27 +33,24 @@ import net.minecraft.client.input.MouseButtonInfo;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.state.gui.BlitRenderState;
 import net.minecraft.client.renderer.state.gui.GuiRenderState;
-import net.minecraft.client.renderer.texture.AbstractTexture;
-import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.sounds.SoundManager;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.chat.*;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Util;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3x2f;
-import org.lwjgl.glfw.GLFW;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -184,7 +182,7 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
             this.minecraft.gui.setScreen(this.parentScreen);
         }).pos(10, this.modList.getBottom() + 8).size(127, 20).build());
         this.modFolderButton = this.addRenderableWidget(new CatalogueIconButton(140, this.modList.getBottom() + 8, 0, 0, onPress -> {
-            Util.getPlatform().openFile(ClientServices.PLATFORM.getModDirectory());
+            Blaze3D.openPath(ClientServices.PLATFORM.getModDirectory().toPath());
         }));
         int padding = 10;
         int contentLeft = this.modList.getRight() + 12 + padding;
@@ -276,7 +274,7 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
     {
         if(url != null)
         {
-            ConfirmLinkScreen.confirmLinkNow(this, url, false);
+            ConfirmLinkScreen.confirmLinkNow(this, URI.create(url), false);
         }
     }
 
@@ -584,7 +582,7 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
             }
             return true;
         }
-        if(ClientHelper.isMouseWithin(10, 9, 10, 10, (int) event.x(), (int) event.y()) && event.button() == GLFW.GLFW_MOUSE_BUTTON_1)
+        if(ClientHelper.isMouseWithin(10, 9, 10, 10, (int) event.x(), (int) event.y()) && event.button() == InputConstants.MOUSE_BUTTON_LEFT)
         {
             this.openLink("https://www.curseforge.com/minecraft/mc-mods/catalogue");
             return true;
@@ -609,7 +607,7 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
     @Override
     public boolean keyPressed(KeyEvent event)
     {
-        if(event.key() == GLFW.GLFW_KEY_F && event.hasControlDown())
+        if(event.key() == InputConstants.KEY_F && event.hasControlDown())
         {
             if(!this.searchTextField.isFocused())
             {
@@ -919,7 +917,7 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
         @Override
         public boolean keyPressed(KeyEvent event)
         {
-            if(event.key() == GLFW.GLFW_KEY_ENTER && this.getSelected() != null)
+            if(event.key() == InputConstants.KEY_RETURN && this.getSelected() != null)
             {
                 CatalogueModListScreen.this.setSelectedModData(this.getSelected().data);
                 SoundManager handler = Minecraft.getInstance().getSoundManager();
@@ -1112,7 +1110,7 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
             if(this.button.mouseClicked(event, doubleClick))
                 return false;
 
-            if(event.button() == GLFW.GLFW_MOUSE_BUTTON_RIGHT)
+            if(event.button() == InputConstants.MOUSE_BUTTON_RIGHT)
             {
                 DropdownMenu menu = DropdownMenu.builder(CatalogueModListScreen.this)
                     .setMinItemSize(0, 16)
@@ -1128,7 +1126,7 @@ public class CatalogueModListScreen extends Screen implements DropdownMenuHandle
                 menu.toggle((int) event.x(), (int) event.y());
                 return false;
             }
-            else if(event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT)
+            else if(event.button() == InputConstants.MOUSE_BUTTON_LEFT)
             {
                 if(IMAGE_ICON_CACHE.get(this.data.getModId()) == MISSING_ICON_INFO)
                 {

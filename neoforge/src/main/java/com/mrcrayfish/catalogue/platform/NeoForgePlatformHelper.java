@@ -5,12 +5,16 @@ import com.mrcrayfish.catalogue.client.IModData;
 import com.mrcrayfish.catalogue.client.NeoForgeModData;
 import com.mrcrayfish.catalogue.exception.ModResourceNotFoundException;
 import com.mrcrayfish.catalogue.platform.services.IPlatformHelper;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.state.gui.GuiRenderState;
+import net.minecraft.server.packs.resources.IoSupplier;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.jarcontents.JarContents;
 import net.neoforged.fml.jarcontents.JarResource;
 import net.neoforged.fml.loading.FMLPaths;
+import net.neoforged.neoforge.client.gui.modlist.DefaultModDisplayInfo;
+import net.neoforged.neoforge.client.gui.modlist.ImageResource;
 import net.neoforged.neoforgespi.language.IModFileInfo;
 
 import java.io.File;
@@ -46,20 +50,22 @@ public class NeoForgePlatformHelper implements IPlatformHelper
     @Override
     public NativeImage loadImageFromModResource(String modId, String resource) throws IOException
     {
-        IModFileInfo info = ModList.get().getModFileById(modId);
-        JarContents contents = info.getFile().getContents();
-        JarResource file = contents.get(resource);
-        if(file != null)
+        ImageResource imageResource = ModList.get().getModContainerById(modId).map(modContainer -> {
+            var displayInfo = new DefaultModDisplayInfo(modContainer);
+            return displayInfo.convertPath(resource);
+        }).orElse(null);
+        if(imageResource != null)
         {
-            try(InputStream stream = file.open())
+            var ioSupplier = imageResource.get(Minecraft.getInstance().getResourceManager());
+            if(ioSupplier != null)
             {
-                return NativeImage.read(stream);
+                try(InputStream stream = ioSupplier.get())
+                {
+                    return NativeImage.read(stream);
+                }
             }
         }
-        else
-        {
-            throw new ModResourceNotFoundException();
-        }
+        throw new ModResourceNotFoundException();
     }
 
     @Override

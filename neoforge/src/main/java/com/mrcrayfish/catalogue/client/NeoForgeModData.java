@@ -11,6 +11,7 @@ import net.neoforged.fml.ModList;
 import net.neoforged.fml.VersionChecker;
 import net.neoforged.fml.loading.moddiscovery.ModInfo;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
+import net.neoforged.neoforge.client.gui.modlist.ModDisplayInfo;
 import net.neoforged.neoforgespi.language.IModInfo;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +72,15 @@ public class NeoForgeModData implements IModData
     @Override
     public String getImageIcon()
     {
-        return this.info.getModProperties().get("catalogueImageIcon") instanceof String s ? s : null;
+        String iconFile = this.info.getConfig().getConfigElement("iconFile")
+            .filter(o ->  o instanceof String)
+            .map(o -> (String) o)
+            .filter(o -> !o.isBlank())
+            .orElse(null);
+        if(iconFile != null) {
+            return iconFile;
+        }
+        return this.info.getModProperties().get("catalogueImageIcon") instanceof String s && !s.isBlank() ? s : null;
     }
 
     @Override

@@ -136,7 +136,7 @@ public class MinecraftModData implements IModData
     public void openConfigScreen(Screen parent)
     {
         Minecraft minecraft = Minecraft.getInstance();
-        minecraft.gui.setScreen(new OptionsScreen(parent, minecraft.options, minecraft.level != null));
+        minecraft.gui.setScreen(new OptionsScreen(parent, minecraft.options));
     }
 
     @Override
